@@ -67,8 +67,7 @@ public class PluginUtil {
                 Field listenersField = Bukkit.getPluginManager().getClass().getDeclaredField("listeners");
                 listenersField.setAccessible(true);
                 listeners = (Map<Event, SortedSet<RegisteredListener>>) listenersField.get(pluginManager);
-            } catch (Exception e) {
-                reloadListeners = false;
+            } catch (Exception ignored) {
             }
 
             Field commandMapField = Bukkit.getPluginManager().getClass().getDeclaredField("commandMap");
@@ -84,13 +83,13 @@ public class PluginUtil {
 
         pluginManager.disablePlugin(plugin);
 
-        if (plugins != null && plugins.contains(plugin))
+        if (plugins != null)
             plugins.remove(plugin);
 
-        if (names != null && names.containsKey(name))
+        if (names != null)
             names.remove(name);
 
-        if (listeners != null && reloadListeners) {
+        if (listeners != null) {
             for (SortedSet<RegisteredListener> set : listeners.values()) {
                 set.removeIf(value -> value.getPlugin() == plugin);
             }
@@ -117,8 +116,6 @@ public class PluginUtil {
                 Logger.getLogger(PluginUtil.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-        System.gc();
     }
 
     /**
@@ -145,7 +142,7 @@ public class PluginUtil {
                 if (plugin.isEnabled()) {
                     return true;
                 } else {
-                    DiscordSRV.debug("Plugin " + plugin.getName() + " found but wasn't enabled. Returning false");
+                    DiscordSRV.debug(() -> "Plugin " + plugin.getName() + " found but wasn't enabled. Returning false");
                     return false;
                 }
             }

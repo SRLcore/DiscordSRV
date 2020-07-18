@@ -37,7 +37,7 @@ public class JdaFilter implements Filter {
             case "INFO": DiscordSRV.info("[JDA] " + message); break;
             case "WARN":
                 if (message.contains("Encountered 429")) {
-                    DiscordSRV.debug(message);
+                    DiscordSRV.debug(() -> message);
                     break;
                 }
 
@@ -50,7 +50,7 @@ public class JdaFilter implements Filter {
                     DiscordSRV.error("[JDA] " + message);
                 }
                 break;
-            default: if (DiscordSRV.config().getBoolean("DebugJDA")) DiscordSRV.debug("[JDA] " + message);
+            default: if (DiscordSRV.config().getBoolean("DebugJDA")) DiscordSRV.debug(() -> "[JDA] " + message);
         }
 
         // all JDA messages should be denied because we handle them ourselves
@@ -91,8 +91,6 @@ public class JdaFilter implements Filter {
                 throwable);
     }
 
-    public void start() {}
-    public void stop() {}
     public boolean isStarted() {
         return true;
     }

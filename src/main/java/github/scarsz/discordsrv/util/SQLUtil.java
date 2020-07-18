@@ -39,8 +39,8 @@ public class SQLUtil {
 
     public static boolean checkIfTableExists(Connection connection, String table) {
         boolean tableExists = false;
-        try (final PreparedStatement statement = connection.prepareStatement("SELECT 1 FROM " + table + " LIMIT 1")) {
-            statement.executeQuery();
+        try (final PreparedStatement statement = connection.prepareStatement("SELECT 1 FROM " + table + " LIMIT 1");
+             ResultSet unused = statement.executeQuery()) {
             tableExists = true;
         } catch (SQLException e) {
             if (!e.getMessage().contains("doesn't exist")) e.printStackTrace();
@@ -50,9 +50,8 @@ public class SQLUtil {
 
     public static Map<String, String> getTableColumns(Connection connection, String table) throws SQLException {
         final Map<String, String> columns = new HashMap<>();
-        try (final PreparedStatement statement = connection.prepareStatement("SHOW COLUMNS FROM " + table)) {
-            ResultSet result = statement.executeQuery();
-
+        try (final PreparedStatement statement = connection.prepareStatement("SHOW COLUMNS FROM " + table);
+             ResultSet result = statement.executeQuery()) {
             while (result.next()) {
                 columns.put(result.getString("Field"), result.getString("Type"));
             }

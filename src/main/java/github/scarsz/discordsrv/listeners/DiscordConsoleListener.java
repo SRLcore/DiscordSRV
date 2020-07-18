@@ -47,7 +47,7 @@ import java.util.zip.ZipFile;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class DiscordConsoleListener extends ListenerAdapter {
 
-    private List<String> allowedFileExtensions = new ArrayList<String>() {{
+    private final List<String> allowedFileExtensions = new ArrayList<String>() {{
         add("jar");
         //add("zip"); todo support uploading compressed plugins & decompress
     }};
@@ -204,11 +204,16 @@ public class DiscordConsoleListener extends ListenerAdapter {
     }
 
     private String getPluginName(String pluginName, ZipFile jarZipFile, ZipEntry entry) throws IOException {
-        if (!entry.getName().equalsIgnoreCase("plugin.yml")) return pluginName;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(jarZipFile.getInputStream(entry)));
-        for (String line : reader.lines().collect(Collectors.toList()))
-            if (line.trim().startsWith("name:"))
-                pluginName = line.replace("name:", "").trim();
-        return pluginName;
+        if (!entry.getName().equalsIgnoreCase("plugin.yml")) {
+            return pluginName;
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(jarZipFile.getInputStream(entry)))) {
+            for (String line : reader.lines().collect(Collectors.toList())) {
+                if (line.trim().startsWith("name:")) {
+                    pluginName = line.replace("name:", "").trim();
+                }
+            }
+            return pluginName;
+        }
     }
 }

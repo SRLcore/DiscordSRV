@@ -69,13 +69,14 @@ public class TownyChatHook implements ChatHook {
     public void onMessage(AsyncChatHookEvent event) {
         // make sure chat channel is registered with a destination
         if (DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(event.getChannel().getName()) == null) {
-            DiscordSRV.debug("Tried looking up destination Discord channel for Towny channel " + event.getChannel().getName() + " but none found");
+            DiscordSRV.debug(() ->
+                    "Tried looking up destination Discord channel for Towny channel " + event.getChannel().getName() + " but none found");
             return;
         }
 
         // make sure message isn't blank
         if (StringUtils.isBlank(event.getMessage())) {
-            DiscordSRV.debug("Received blank TownyChat message, not processing");
+            DiscordSRV.debug(() -> "Received blank TownyChat message, not processing");
             return;
         }
 

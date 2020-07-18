@@ -33,9 +33,11 @@ import net.dv8tion.jda.api.exceptions.PermissionException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
+import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -156,7 +158,7 @@ public class DiscordUtil {
 
         return message;
     }
-    private static Map<String, Pattern> mentionPatternCache = new HashMap<>();
+    private static final Map<String, Pattern> mentionPatternCache = new HashMap<>();
     static {
         // event listener to clear the cache of invalid patterns because of name changes
         if (DiscordUtil.getJda() != null) {
@@ -204,7 +206,7 @@ public class DiscordUtil {
      */
     public static String strip(String text) {
         if (StringUtils.isBlank(text)) {
-            DiscordSRV.debug("Tried stripping blank message");
+            DiscordSRV.debug(() -> "Tried stripping blank message");
             return "";
         }
 
@@ -244,7 +246,7 @@ public class DiscordUtil {
 
     public static String aggressiveStrip(String text) {
         if (StringUtils.isBlank(text)) {
-            DiscordSRV.debug("Tried aggressively stripping blank message");
+            DiscordSRV.debug(() -> "Tried aggressively stripping blank message");
             return null;
         }
 
@@ -267,22 +269,22 @@ public class DiscordUtil {
      */
     public static void sendMessage(TextChannel channel, String message, int expiration, boolean editMessage) {
         if (channel == null) {
-            DiscordSRV.debug("Tried sending a message to a null channel");
+            DiscordSRV.debug(() -> "Tried sending a message to a null channel");
             return;
         }
 
         if (getJda() == null) {
-            DiscordSRV.debug("Tried sending a message using a null JDA instance");
+            DiscordSRV.debug(() -> "Tried sending a message using a null JDA instance");
             return;
         }
 
         if (message == null) {
-            DiscordSRV.debug("Tried sending a null message to " + channel);
+            DiscordSRV.debug(() -> "Tried sending a null message to " + channel);
             return;
         }
 
         if (StringUtils.isBlank(message)) {
-            DiscordSRV.debug("Tried sending a blank message to " + channel);
+            DiscordSRV.debug(() -> "Tried sending a blank message to " + channel);
             return;
         }
 
@@ -299,7 +301,11 @@ public class DiscordUtil {
             maxLength = 2000;
         }
         if (message.length() > maxLength) {
-            DiscordSRV.debug("Tried sending message with length of " + message.length() + " (" + (message.length() - maxLength) + " over limit)");
+            String finalMessage = message;
+            int finalMaxLength = maxLength;
+            DiscordSRV.debug(() ->
+                    "Tried sending message with length of " + finalMessage.length() + " (" + (finalMessage.length() -
+                            finalMaxLength) + " over limit)");
             overflow = message.substring(maxLength);
             message = message.substring(0, maxLength);
         }
@@ -365,43 +371,41 @@ public class DiscordUtil {
      * Send the given message to the given channel, blocking the thread's execution until it's successfully sent then returning it
      * @param channel The channel to send the message to
      * @param message The message to send to the channel
-     * @return The sent message
      */
-    public static Message sendMessageBlocking(TextChannel channel, String message) {
+    public static void sendMessageBlocking(TextChannel channel, String message) {
         if (message == null || StringUtils.isBlank(message)) {
-            DiscordSRV.debug("Tried sending a null or blank message");
-            return null;
+            DiscordSRV.debug(() -> "Tried sending a null or blank message");
+            return;
         }
 
         if (channel == null) {
-            DiscordSRV.debug("Tried sending a message to a null channel");
-            return null;
+            DiscordSRV.debug(() -> "Tried sending a message to a null channel");
+            return;
         }
 
         message = translateEmotes(message, channel.getGuild());
 
-        return sendMessageBlocking(channel, new MessageBuilder().append(message).build());
+        sendMessageBlocking(channel, new MessageBuilder().append(message).build());
     }
     /**
      * Send the given message to the given channel, blocking the thread's execution until it's successfully sent then returning it
      * @param channel The channel to send the message to
      * @param message The message to send to the channel
-     * @return The sent message
      */
-    public static Message sendMessageBlocking(TextChannel channel, Message message) {
+    public static void sendMessageBlocking(TextChannel channel, Message message) {
         if (getJda() == null) {
-            DiscordSRV.debug("Tried sending a message when JDA was null");
-            return null;
+            DiscordSRV.debug(() -> "Tried sending a message when JDA was null");
+            return;
         }
 
         if (channel == null) {
-            DiscordSRV.debug("Tried sending a message to a null channel");
-            return null;
+            DiscordSRV.debug(() -> "Tried sending a message to a null channel");
+            return;
         }
 
         if (message == null || StringUtils.isBlank(message.getContentRaw())) {
-            DiscordSRV.debug("Tried sending a null or blank message");
-            return null;
+            DiscordSRV.debug(() -> "Tried sending a null or blank message");
+            return;
         }
 
         Message sentMessage;
@@ -413,11 +417,10 @@ public class DiscordUtil {
             } else {
                 DiscordSRV.warning("Could not send message in channel " + channel + " because \"" + e.getMessage() + "\"");
             }
-            return null;
+            return;
         }
         DiscordSRV.api.callEvent(new DiscordGuildMessageSentEvent(getJda(), sentMessage));
 
-        return sentMessage;
     }
 
     /**
@@ -427,7 +430,7 @@ public class DiscordUtil {
      */
     public static void queueMessage(TextChannel channel, String message) {
         if (channel == null) {
-            DiscordSRV.debug("Tried sending a message to a null channel");
+            DiscordSRV.debug(() -> "Tried sending a message to a null channel");
             return;
         }
 
@@ -460,7 +463,7 @@ public class DiscordUtil {
      */
     public static void queueMessage(TextChannel channel, Message message, Consumer<Message> consumer) {
         if (channel == null) {
-            DiscordSRV.debug("Tried sending a message to a null channel");
+            DiscordSRV.debug(() -> "Tried sending a message to a null channel");
             return;
         }
 
@@ -487,7 +490,7 @@ public class DiscordUtil {
      */
     public static void setTextChannelTopic(TextChannel channel, String topic) {
         if (channel == null) {
-            DiscordSRV.debug("Attempted to set status of null channel");
+            DiscordSRV.debug(() -> "Attempted to set status of null channel");
             return;
         }
 
@@ -511,16 +514,16 @@ public class DiscordUtil {
      */
     public static void setGameStatus(String gameStatus) {
         if (getJda() == null) {
-            DiscordSRV.debug("Attempted to set game status using null JDA");
+            DiscordSRV.debug(() -> "Attempted to set game status using null JDA");
             return;
         }
         if (StringUtils.isBlank(gameStatus)) {
-            DiscordSRV.debug("Attempted setting game status to a null or empty string");
+            DiscordSRV.debug(() -> "Attempted setting game status to a null or empty string");
             return;
         }
 
         // set PAPI placeholders
-        if (PluginUtil.pluginHookIsEnabled("placeholderapi")) gameStatus = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(null, gameStatus);
+        if (PluginUtil.pluginHookIsEnabled("placeholderapi")) gameStatus = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders((OfflinePlayer) null, gameStatus);
 
         getJda().getPresence().setActivity(Activity.playing(gameStatus));
     }
@@ -594,7 +597,7 @@ public class DiscordUtil {
      */
     public static String convertRoleToMinecraftColor(Role role) {
         if (role == null) {
-            DiscordSRV.debug("Attempted to look up color for null role");
+            DiscordSRV.debug(() -> "Attempted to look up color for null role");
             return "";
         }
 
@@ -604,18 +607,19 @@ public class DiscordUtil {
         String translatedColor = DiscordSRV.getPlugin().getColors().get(hex);
 
         if (translatedColor == null) {
+            String finalHex = hex;
             if (DiscordSRV.config().getBoolean("Experiment_Automatic_Color_Translations")) {
-                DiscordSRV.debug("Looking up the color for role " + role + " (" + hex + ") with automatic translation");
+                DiscordSRV.debug(() -> "Looking up the color for role " + role + " (" + finalHex + ") with automatic translation");
 
                 ChatColor determinedColor = minecraftColors.entrySet().stream()
                         .min(Comparator.comparingInt(entry -> colorDistance(color, entry.getKey())))
                         .map(Map.Entry::getValue)
                         .orElseThrow(() -> new RuntimeException("This should not be possible:tm:"));
 
-                DiscordSRV.debug("Color for " + role + " determined to: " + determinedColor.name());
+                DiscordSRV.debug(() -> "Color for " + role + " determined to: " + determinedColor.name());
                 translatedColor = determinedColor.toString();
             } else {
-                DiscordSRV.debug("Attempted to lookup translated color " + hex + " for role " + role + " but no definition was found (and automatic translation was disabled)");
+                DiscordSRV.debug(() -> "Attempted to lookup translated color " + finalHex + " for role " + role + " but no definition was found (and automatic translation was disabled)");
                 translatedColor = "";
             }
         }
@@ -629,10 +633,10 @@ public class DiscordUtil {
      * @return The formatted String representing the list of roles
      */
     public static String getFormattedRoles(List<Role> roles) {
-        return String.join(LangUtil.Message.CHAT_TO_MINECRAFT_ALL_ROLES_SEPARATOR.toString(), roles.stream()
+        return roles.stream()
                 .map(DiscordUtil::getRoleName)
                 .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList()));
+                .collect(Collectors.joining(LangUtil.Message.CHAT_TO_MINECRAFT_ALL_ROLES_SEPARATOR.toString()));
     }
 
     public static void setAvatar(File avatar) throws RuntimeException {
@@ -675,7 +679,7 @@ public class DiscordUtil {
 
     public static void addRoleToMember(Member member, Role role) {
         if (member == null) {
-            DiscordSRV.debug("Can't add role to null member");
+            DiscordSRV.debug(() -> "Can't add role to null member");
             return;
         }
 
@@ -692,7 +696,7 @@ public class DiscordUtil {
 
     public static void addRolesToMember(Member member, Role... roles) {
         if (member == null) {
-            DiscordSRV.debug("Can't add roles to null member");
+            DiscordSRV.debug(() -> "Can't add roles to null member");
             return;
         }
 
@@ -718,7 +722,7 @@ public class DiscordUtil {
 
     public static void removeRolesFromMember(Member member, Role... roles) {
         if (member == null) {
-            DiscordSRV.debug("Can't remove roles from null member");
+            DiscordSRV.debug(() -> "Can't remove roles from null member");
             return;
         }
 
@@ -743,17 +747,17 @@ public class DiscordUtil {
 
     public static void setNickname(Member member, String nickname) {
         if (member == null) {
-            DiscordSRV.debug("Can't set nickname of null member");
+            DiscordSRV.debug(() -> "Can't set nickname of null member");
             return;
         }
 
         if (!member.getGuild().getSelfMember().canInteract(member)) {
-            DiscordSRV.debug("Not setting " + member + "'s nickname because we can't interact with them");
+            DiscordSRV.debug(() -> "Not setting " + member + "'s nickname because we can't interact with them");
             return;
         }
 
         if (nickname != null && nickname.equals(member.getNickname())) {
-            DiscordSRV.debug("Not setting " + member + "'s nickname because it wouldn't change");
+            DiscordSRV.debug(() -> "Not setting " + member + "'s nickname because it wouldn't change");
             return;
         }
 
@@ -787,7 +791,7 @@ public class DiscordUtil {
     }
     public static void banMember(Member member, int daysOfMessagesToDelete) {
         if (member == null) {
-            DiscordSRV.debug("Attempted to ban null member");
+            DiscordSRV.debug(() -> "Attempted to ban null member");
             return;
         }
 

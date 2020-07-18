@@ -52,7 +52,8 @@ public class PlayerAdvancementDoneListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerAdvancementDone(PlayerAdvancementDoneEvent event) {
         // return if advancement or player objects are knackered because this can apparently happen for some reason
-        if (event.getAdvancement() == null || event.getAdvancement().getKey().getKey().contains("recipe/") || event.getPlayer() == null) return;
+        event.getAdvancement();
+        if (event.getAdvancement().getKey().getKey().contains("recipe/")) return;
 
         // respect invisibility plugins
         if (PlayerUtil.isVanished(event.getPlayer())) return;
@@ -81,7 +82,7 @@ public class PlayerAdvancementDoneListener implements Listener {
 
         AchievementMessagePreProcessEvent preEvent = DiscordSRV.api.callEvent(new AchievementMessagePreProcessEvent(channelName, messageFormat, player, advancementTitle));
         if (preEvent.isCancelled()) {
-            DiscordSRV.debug("AchievementMessagePreProcessEvent was cancelled, message send aborted");
+            DiscordSRV.debug(() -> "AchievementMessagePreProcessEvent was cancelled, message send aborted");
             return;
         }
         // Update from event in case any listeners modified parameters
@@ -123,7 +124,7 @@ public class PlayerAdvancementDoneListener implements Listener {
 
         AchievementMessagePostProcessEvent postEvent = DiscordSRV.api.callEvent(new AchievementMessagePostProcessEvent(channelName, discordMessage, player, advancementTitle, messageFormat.isUseWebhooks(), webhookName, webhookAvatarUrl, preEvent.isCancelled()));
         if (postEvent.isCancelled()) {
-            DiscordSRV.debug("AchievementMessagePostProcessEvent was cancelled, message send aborted");
+            DiscordSRV.debug(() -> "AchievementMessagePostProcessEvent was cancelled, message send aborted");
             return;
         }
         // Update from event in case any listeners modified parameters
@@ -163,7 +164,8 @@ public class PlayerAdvancementDoneListener implements Listener {
                 String componentJson = (String) chatSerializerClass.getMethod("a", titleChatBaseComponent.getClass()).invoke(null, titleChatBaseComponent);
                 return LegacyComponentSerializer.INSTANCE.serialize(GsonComponentSerializer.INSTANCE.deserialize(componentJson));
             } catch (Exception e) {
-                DiscordSRV.debug("Failed to get title of advancement " + advancement.getKey().getKey() + ": " + e.getMessage());
+                DiscordSRV.debug(() ->
+                        "Failed to get title of advancement " + advancement.getKey().getKey() + ": " + e.getMessage());
 
                 String rawAdvancementName = advancement.getKey().getKey();
                 return Arrays.stream(rawAdvancementName.substring(rawAdvancementName.lastIndexOf("/") + 1).toLowerCase().split("_"))

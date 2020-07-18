@@ -71,7 +71,8 @@ public class PresenceUpdater extends Thread {
 
                 if (!same) {
                     if (StringUtils.isNotBlank(status)) {
-                        DiscordSRV.debug("Setting presence to \"" + status + "\"");
+                        String finalStatus = status;
+                        DiscordSRV.debug(() -> "Setting presence to \"" + finalStatus + "\"");
 
                         if (StringUtils.startsWithIgnoreCase(status, "watching")) {
                             String removed = status.substring("watching".length()).trim();
@@ -87,19 +88,19 @@ public class PresenceUpdater extends Thread {
                         }
                     } else {
                         DiscordUtil.getJda().getPresence().setPresence((Activity) null, false);
-                        DiscordSRV.debug("Cleared presence status");
+                        DiscordSRV.debug(() -> "Cleared presence status");
                     }
                 } else {
-                    DiscordSRV.debug("Not setting presence, status was the same");
+                    DiscordSRV.debug(() -> "Not setting presence, status was the same");
                 }
             } else {
-                DiscordSRV.debug("Skipping status update cycle, JDA was null");
+                DiscordSRV.debug(() -> "Skipping status update cycle, JDA was null");
             }
 
             try {
                 Thread.sleep(TimeUnit.MINUTES.toMillis(rate));
             } catch (InterruptedException ignored) {
-                DiscordSRV.debug("Broke from Status Updater thread: sleep interrupted");
+                DiscordSRV.debug(() -> "Broke from Status Updater thread: sleep interrupted");
                 return;
             }
         }

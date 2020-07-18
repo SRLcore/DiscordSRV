@@ -44,7 +44,7 @@ public class LunaChatHook implements ChatHook {
         // make sure chat channel is registered with a destination
         String channelName = event.getChannel().getName();
         if (DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(channelName) == null) {
-            DiscordSRV.debug("Received a LunaChat message from non-defined channel: " + channelName);
+            DiscordSRV.debug(() -> "Received a LunaChat message from non-defined channel: " + channelName);
             return;
         }
 
@@ -60,7 +60,9 @@ public class LunaChatHook implements ChatHook {
     @Override
     public void broadcastMessageToChannel(String channel, String message) {
         Channel chatChannel = LunaChat.getInstance().getLunaChatAPI().getChannel(channel);
-        DiscordSRV.debug("Resolved LunaChat channel " + channel + " -> " + chatChannel + (chatChannel != null ? " (" + chatChannel.getName() + ")" : ""));
+        DiscordSRV.debug(() ->
+                String.format("Resolved LunaChat channel %s -> %s%s", channel, chatChannel,
+                        chatChannel != null ? " (" + chatChannel.getName() + ")" : ""));
         if (chatChannel == null) return; // no suitable channel found
 
         String plainMessage = LangUtil.Message.CHAT_CHANNEL_MESSAGE.toString()

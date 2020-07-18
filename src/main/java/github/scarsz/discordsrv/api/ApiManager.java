@@ -47,7 +47,7 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class ApiManager {
 
-    private List<Object> apiListeners = new ArrayList<>();
+    private final List<Object> apiListeners = new ArrayList<>();
     private boolean anyHooked = false;
 
     /**

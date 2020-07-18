@@ -36,7 +36,7 @@ import java.util.Map;
 
 public class CommandManager {
 
-    @Getter private Map<String, Method> commands = new HashMap<>();
+    @Getter private final Map<String, Method> commands = new HashMap<>();
 
     public CommandManager() {
         List<Class<?>> commandClasses = Arrays.asList(
@@ -57,15 +57,15 @@ public class CommandManager {
                 if (!method.isAnnotationPresent(Command.class)) continue; // make sure method is marked as a command
 
                 if (method.getParameters().length != 2) {
-                    DiscordSRV.debug("Method " + method.toGenericString().replace("public static void ", "") + " annotated as command but parameters count != 2");
+                    DiscordSRV.debug(() -> "Method " + method.toGenericString().replace("public static void ", "") + " annotated as command but parameters count != 2");
                     continue;
                 }
                 if (method.getParameters()[0].getType() != CommandSender.class && method.getParameters()[0].getType() != Player.class) {
-                    DiscordSRV.debug("Method " + method.toGenericString().replace("public static void ", "") + " annotated as command but parameter 1's type != CommandSender || Player");
+                    DiscordSRV.debug(() -> "Method " + method.toGenericString().replace("public static void ", "") + " annotated as command but parameter 1's type != CommandSender || Player");
                     continue;
                 }
                 if (method.getParameters()[1].getType() != String[].class) {
-                    DiscordSRV.debug("Method " + method.toGenericString().replace("public static void ", "") + " annotated as command but parameter 2's type != String[]");
+                    DiscordSRV.debug(() -> "Method " + method.toGenericString().replace("public static void ", "") + " annotated as command but parameter 2's type != String[]");
                     continue;
                 }
 

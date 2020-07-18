@@ -80,14 +80,15 @@ public class HerochatHook implements ChatHook {
 
         if (channels.size() > 0) {
             for (Channel channel : Herochat.getChannelManager().getChannels()) {
-                DiscordSRV.debug("\"" + channel.getName() + "\" equalsIgnoreCase \"" + name + "\" == " + channel.getName().equalsIgnoreCase(name));
+                DiscordSRV.debug(() ->
+                        "\"" + channel.getName() + "\" equalsIgnoreCase \"" + name + "\" == " + channel.getName().equalsIgnoreCase(name));
                 if (channel.getName().equalsIgnoreCase(name)) {
                     return channel;
                 }
             }
-            DiscordSRV.debug("No matching Herochat channels for name \"" + name + "\"");
+            DiscordSRV.debug(() -> "No matching Herochat channels for name \"" + name + "\"");
         } else {
-            DiscordSRV.debug("Herochat's channel manager returned no registered channels");
+            DiscordSRV.debug(() -> "Herochat's channel manager returned no registered channels");
         }
         return null;
     }

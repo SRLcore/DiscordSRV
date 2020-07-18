@@ -31,7 +31,7 @@ import java.util.jar.Manifest;
 
 public class ManifestUtil {
 
-    private static Map<String, String> attributes = new HashMap<>();
+    private static final Map<String, String> attributes = new HashMap<>();
 
     static {
         try {

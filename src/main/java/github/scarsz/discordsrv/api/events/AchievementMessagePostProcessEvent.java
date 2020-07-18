@@ -18,7 +18,6 @@
 
 package github.scarsz.discordsrv.api.events;
 
-import github.scarsz.discordsrv.objects.MessageFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.MessageBuilder;
@@ -30,7 +29,7 @@ public class AchievementMessagePostProcessEvent extends GameEvent implements Can
 
     @Getter @Setter private boolean cancelled;
 
-    @Getter private String achievementName;
+    @Getter private final String achievementName;
     @Getter @Setter private String channel;
 
     @Getter @Setter private Message discordMessage;

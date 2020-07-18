@@ -39,7 +39,7 @@ public class CommandLink {
             helpMessage = "Generates a code to link your Minecraft account to your Discord account",
             permission = "discordsrv.link"
     )
-    public static void execute(Player sender, String[] args) {
+    public static void execute(Player sender) {
         AccountLinkManager manager = DiscordSRV.getPlugin().getAccountLinkManager();
         if (manager == null) {
             sender.sendMessage(ChatColor.RED + LangUtil.InternalMessage.UNABLE_TO_LINK_ACCOUNTS_RIGHT_NOW.toString());

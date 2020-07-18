@@ -51,7 +51,7 @@ public class DynmapHook implements PluginHook {
             api.sendBroadcastToWeb(name, message);
         } catch (Throwable t) {
             DiscordSRV.warning("Failed to send message to dynmap: " + t.toString());
-            DiscordSRV.debug(ExceptionUtils.getStackTrace(t));
+            DiscordSRV.debug(() -> ExceptionUtils.getStackTrace(t));
         }
     }
 

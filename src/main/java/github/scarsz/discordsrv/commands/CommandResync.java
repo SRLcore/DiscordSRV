@@ -32,7 +32,7 @@ public class CommandResync {
             helpMessage = "Resynchronizes all groups & roles",
             permission = "discordsrv.resync"
     )
-    public static void execute(CommandSender sender, String[] args) {
+    public static void execute(CommandSender sender) {
         if (!DiscordSRV.getPlugin().isGroupRoleSynchronizationEnabled()) {
             sender.sendMessage(ChatColor.RED + LangUtil.InternalMessage.RESYNC_WHEN_GROUP_SYNC_DISABLED.toString());
             return;

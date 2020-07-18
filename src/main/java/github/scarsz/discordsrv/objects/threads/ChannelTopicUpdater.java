@@ -48,13 +48,13 @@ public class ChannelTopicUpdater extends Thread {
                 if (StringUtils.isNotBlank(consoleTopic))
                     DiscordUtil.setTextChannelTopic(DiscordSRV.getPlugin().getConsoleChannel(), consoleTopic);
             } else {
-                DiscordSRV.debug("Skipping channel topic update cycle, JDA was null");
+                DiscordSRV.debug(() -> "Skipping channel topic update cycle, JDA was null");
             }
 
             try {
                 Thread.sleep(TimeUnit.MINUTES.toMillis(rate));
             } catch (InterruptedException e) {
-                DiscordSRV.debug("Broke from Channel Topic Updater thread: sleep interrupted");
+                DiscordSRV.debug(() -> "Broke from Channel Topic Updater thread: sleep interrupted");
                 return;
             }
         }

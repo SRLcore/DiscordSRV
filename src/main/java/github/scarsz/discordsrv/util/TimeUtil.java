@@ -23,9 +23,9 @@ import java.util.Date;
 
 public class TimeUtil {
 
-    private static Date date = new Date();
-    private static SimpleDateFormat timestampFormat = new SimpleDateFormat("EEE, d. MMM yyyy HH:mm:ss z");
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private static final Date date = new Date();
+    private static final SimpleDateFormat timestampFormat = new SimpleDateFormat("EEE, d. MMM yyyy HH:mm:ss z");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public static String format(String format) {
         return format(new SimpleDateFormat(format));

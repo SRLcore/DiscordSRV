@@ -38,8 +38,8 @@ import java.util.Set;
 @SuppressWarnings("NullableProblems")
 public class SingleCommandSender implements ConsoleCommandSender {
 
-    private GuildMessageReceivedEvent event;
-    private ConsoleCommandSender sender;
+    private final GuildMessageReceivedEvent event;
+    private final ConsoleCommandSender sender;
 
     public SingleCommandSender(GuildMessageReceivedEvent event, ConsoleCommandSender consoleCommandSender) {
         this.event = event;

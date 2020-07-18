@@ -149,7 +149,7 @@ public class AccountLinkManager {
     }
 
     public void link(String discordId, UUID uuid) {
-        DiscordSRV.debug("File backed link: " + discordId + ": " + uuid);
+        DiscordSRV.debug(() -> "File backed link: " + discordId + ": " + uuid);
 
         // make sure the user isn't linked
         unlink(discordId);
@@ -167,7 +167,8 @@ public class AccountLinkManager {
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
         User user = DiscordUtil.getUserById(discordId);
         for (String command : DiscordSRV.config().getStringList("MinecraftDiscordAccountLinkedConsoleCommands")) {
-            DiscordSRV.debug("Parsing command /" + command + " for linked commands...");
+            String finalCommand1 = command;
+            DiscordSRV.debug(() -> "Parsing command /" + finalCommand1 + " for linked commands...");
             command = command
                     .replace("%minecraftplayername%", PrettyUtil.beautifyUsername(offlinePlayer, "[Unknown Player]", false))
                     .replace("%minecraftdisplayname%", PrettyUtil.beautifyNickname(offlinePlayer, "[Unknown Player]", false))
@@ -176,13 +177,13 @@ public class AccountLinkManager {
                     .replace("%discordname%", user != null ? user.getName() : "")
                     .replace("%discorddisplayname%", PrettyUtil.beautify(user, "", false));
             if (StringUtils.isBlank(command)) {
-                DiscordSRV.debug("Command was blank, skipping");
+                DiscordSRV.debug(() -> "Command was blank, skipping");
                 continue;
             }
-            if (PluginUtil.pluginHookIsEnabled("placeholderapi")) command = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(Bukkit.getPlayer(uuid), command);
+            if (PluginUtil.pluginHookIsEnabled("placeholderapi")) command = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(uuid), command);
 
             String finalCommand = command;
-            DiscordSRV.debug("Final command to be run: /" + finalCommand);
+            DiscordSRV.debug(() -> "Final command to be run: /" + finalCommand);
             Bukkit.getScheduler().scheduleSyncDelayedTask(DiscordSRV.getPlugin(), () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand));
         }
 
@@ -198,13 +199,13 @@ public class AccountLinkManager {
                     if (member != null) {
                         DiscordUtil.addRoleToMember(member, roleToAdd);
                     } else {
-                        DiscordSRV.debug("Couldn't find member for " + offlinePlayer.getName() + " in " + roleToAdd.getGuild());
+                        DiscordSRV.debug(() -> "Couldn't find member for " + offlinePlayer.getName() + " in " + roleToAdd.getGuild());
                     }
                 } else {
-                    DiscordSRV.debug("Couldn't find \"account linked\" role " + roleName + " to add to " + offlinePlayer.getName() + "'s linked Discord account");
+                    DiscordSRV.debug(() -> "Couldn't find \"account linked\" role " + roleName + " to add to " + offlinePlayer.getName() + "'s linked Discord account");
                 }
             } catch (Throwable t) {
-                DiscordSRV.debug("Couldn't add \"account linked\" role \"" + roleName + "\" due to exception: " + ExceptionUtils.getMessage(t));
+                DiscordSRV.debug(() -> "Couldn't add \"account linked\" role \"" + roleName + "\" due to exception: " + ExceptionUtils.getMessage(t));
             }
         }
 
@@ -226,13 +227,13 @@ public class AccountLinkManager {
                     if (member != null) {
                         role.getGuild().removeRoleFromMember(member, role).queue();
                     } else {
-                        DiscordSRV.debug("Couldn't remove \"linked\" role from null member: " + uuid);
+                        DiscordSRV.debug(() -> "Couldn't remove \"linked\" role from null member: " + uuid);
                     }
                 } else {
-                    DiscordSRV.debug("Couldn't remove user from null \"linked\" role");
+                    DiscordSRV.debug(() -> "Couldn't remove user from null \"linked\" role");
                 }
             } catch (Throwable t) {
-                DiscordSRV.debug("Failed to remove \"linked\" role from [" + uuid + ":" + discordId + "] during unlink: " + ExceptionUtils.getMessage(t));
+                DiscordSRV.debug(() -> "Failed to remove \"linked\" role from [" + uuid + ":" + discordId + "] during unlink: " + ExceptionUtils.getMessage(t));
             }
         }
     }
@@ -295,7 +296,7 @@ public class AccountLinkManager {
                     .replace("%discordname%", user != null ? user.getName() : "")
                     .replace("%discorddisplayname%", PrettyUtil.beautify(user, "", false));
             if (StringUtils.isBlank(command)) continue;
-            if (PluginUtil.pluginHookIsEnabled("placeholderapi")) command = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(Bukkit.getPlayer(uuid), command);
+            if (PluginUtil.pluginHookIsEnabled("placeholderapi")) command = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(uuid), command);
 
             String finalCommand = command;
             Bukkit.getScheduler().scheduleSyncDelayedTask(DiscordSRV.getPlugin(), () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand));
@@ -305,7 +306,7 @@ public class AccountLinkManager {
             if (member.getGuild().getSelfMember().canInteract(member)) {
                 member.modifyNickname(null).queue();
             } else {
-                DiscordSRV.debug("Can't remove nickname from " + member + ", bot is lower in hierarchy");
+                DiscordSRV.debug(() -> "Can't remove nickname from " + member + ", bot is lower in hierarchy");
             }
         }
     }

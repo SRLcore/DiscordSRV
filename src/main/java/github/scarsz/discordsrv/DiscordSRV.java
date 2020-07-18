@@ -18,6 +18,7 @@
 
 package github.scarsz.discordsrv;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
@@ -101,7 +102,7 @@ import org.minidns.record.Record;
 import javax.annotation.CheckReturnValue;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.login.LoginException;
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -109,10 +110,14 @@ import java.lang.reflect.Method;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -130,13 +135,13 @@ public class DiscordSRV extends JavaPlugin {
     @Getter private final Map<String, String> channels = new LinkedHashMap<>(); // <in-game channel name, discord channel>
     @Getter private ChannelTopicUpdater channelTopicUpdater;
     @Getter private final Map<String, String> colors = new HashMap<>();
-    @Getter private CommandManager commandManager = new CommandManager();
-    @Getter private Queue<String> consoleMessageQueue = new LinkedList<>();
+    @Getter private final CommandManager commandManager = new CommandManager();
+    @Getter private final Queue<String> consoleMessageQueue = new LinkedList<>();
     @Getter private ConsoleMessageQueueWorker consoleMessageQueueWorker;
     @Getter private ScheduledExecutorService updateChecker = null;
     @Getter private ConsoleAppender consoleAppender;
-    @Getter private Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    @Getter private GroupSynchronizationManager groupSynchronizationManager = new GroupSynchronizationManager();
+    @Getter private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    @Getter private final GroupSynchronizationManager groupSynchronizationManager = new GroupSynchronizationManager();
     @Getter private JDA jda = null;
     @Getter private ServerWatchdog serverWatchdog;
     @Getter private VoiceModule voiceModule;
@@ -159,6 +164,10 @@ public class DiscordSRV extends JavaPlugin {
     private JdaFilter jdaFilter;
     private final DynamicConfig config;
     private String consoleChannel;
+    public static final Pattern INVALID_TOKEN_REGEX = Pattern.compile("[^\\w\\d-_.]");
+    public static final Pattern TIME_OR_DATE_TOKEN = Pattern.compile("%time%|%date%");
+    public static final Supplier<Integer> DEBUG_LEVEL_SUPPLIER =
+            Suppliers.memoizeWithExpiration(() -> DiscordSRV.config().getInt("DebugLevel"), 1, TimeUnit.SECONDS);
 
     public static DiscordSRV getPlugin() {
         return getPlugin(DiscordSRV.class);
@@ -251,17 +260,24 @@ public class DiscordSRV extends JavaPlugin {
     public static void error(String message) {
         getPlugin().getLogger().severe(message);
     }
-    public static void debug(String message) {
+    public static void debug(Supplier<String> message) {
         // return if plugin is not in debug mode
-        if (DiscordSRV.config().getInt("DebugLevel") == 0) return;
+        if (DEBUG_LEVEL_SUPPLIER.get() == 0) return;
 
-        getPlugin().getLogger().info("[DEBUG] " + message + (DiscordSRV.config().getInt("DebugLevel") >= 2 ? "\n" + DebugUtil.getStackTrace() : ""));
-    }
-    public static void debug(Collection<String> message) {
-        message.forEach(DiscordSRV::debug);
+        internalDebug(message.get());
     }
 
-    @SuppressWarnings("unchecked")
+    public static void debugMultiple(Supplier<Collection<String>> message) {
+        // return if plugin is not in debug mode
+        if (DEBUG_LEVEL_SUPPLIER.get() == 0) return;
+
+        message.get().forEach(DiscordSRV::internalDebug);
+    }
+    private static void internalDebug(String message) {
+        getPlugin().getLogger().info("[DEBUG] " + message +
+                (DEBUG_LEVEL_SUPPLIER.get() >= 2 ? "\n" + DebugUtil.getStackTrace() : ""));
+    }
+
     public DiscordSRV() {
         // load config
         getDataFolder().mkdirs();
@@ -304,7 +320,7 @@ public class DiscordSRV extends JavaPlugin {
                     .filter(lang -> lang.getCode().equalsIgnoreCase(forcedLanguage) ||
                             lang.name().equalsIgnoreCase(forcedLanguage)
                     )
-                    .findFirst().ifPresent(lang -> config.setLanguage(lang));
+                    .findFirst().ifPresent(config::setLanguage);
         }
 
         // Make discordsrv.sync.x & discordsrv.sync.deny.x permissions denied by default
@@ -342,7 +358,7 @@ public class DiscordSRV extends JavaPlugin {
 
         ConfigUtil.migrate();
         ConfigUtil.logMissingOptions();
-        DiscordSRV.debug("Language is " + config.getLanguage().getName());
+        debug(() -> "Language is " + config.getLanguage().getName());
 
         version = getDescription().getVersion();
         Thread initThread = new Thread(this::init, "DiscordSRV - Initialization");
@@ -423,7 +439,7 @@ public class DiscordSRV extends JavaPlugin {
             try {
                 Class<?> jdaFilterClass = Class.forName("github.scarsz.discordsrv.objects.log4j.JdaFilter");
                 jdaFilter = (JdaFilter) jdaFilterClass.newInstance();
-                ((org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getRootLogger()).addFilter((org.apache.logging.log4j.core.Filter) jdaFilter);
+                ((org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getRootLogger()).addFilter(jdaFilter);
             } catch (Exception e) {
                 DiscordSRV.error("Failed to attach JDA message filter to root logger: " + e.getMessage());
                 e.printStackTrace();
@@ -457,7 +473,7 @@ public class DiscordSRV extends JavaPlugin {
                 // https://github.com/dnsjava/dnsjava/blob/master/src/main/java/org/xbill/DNS/SimpleResolver.java
                 // https://satreth.blogspot.com/2015/01/java-dns-query.html
 
-                private StrippedDnsClient client = new StrippedDnsClient();
+                private final StrippedDnsClient client = new StrippedDnsClient();
                 private int failedRequests = 0;
                 @NotNull @Override
                 public List<InetAddress> lookup(@NotNull String host) throws UnknownHostException {
@@ -473,7 +489,7 @@ public class DiscordSRV extends JavaPlugin {
                         } catch (Exception e) {
                             failedRequests++;
                             DiscordSRV.error("System DNS FAILED to resolve hostname " + host + ", " +
-                                    (max == 0 ? "" : failedRequests >= max ? "using fallback DNS for this request" : "switching to fallback DNS servers") + "!");
+                                    (failedRequests >= max ? "using fallback DNS for this request" : "switching to fallback DNS servers" + "!"));
                             if (max == 0) {
                                 // not using fallback
                                 if (e instanceof UnknownHostException) {
@@ -576,21 +592,21 @@ public class DiscordSRV extends JavaPlugin {
         String token;
         if (StringUtils.isNotBlank(System.getProperty("DISCORDSRV_TOKEN"))) {
             token = System.getProperty("DISCORDSRV_TOKEN");
-            DiscordSRV.debug("Using bot token supplied from JVM property DISCORDSRV_TOKEN");
+            debug(() -> "Using bot token supplied from JVM property DISCORDSRV_TOKEN");
         } else if (StringUtils.isNotBlank(System.getenv("DISCORDSRV_TOKEN"))) {
             token = System.getenv("DISCORDSRV_TOKEN");
-            DiscordSRV.debug("Using bot token supplied from environment variable DISCORDSRV_TOKEN");
+            debug(() -> "Using bot token supplied from environment variable DISCORDSRV_TOKEN");
         } else if (tokenFile.exists()) {
             try {
                 token = FileUtils.readFileToString(tokenFile, StandardCharsets.UTF_8);
-                DiscordSRV.debug("Using bot token supplied from " + tokenFile.getPath());
+                debug(() -> "Using bot token supplied from " + tokenFile.getPath());
             } catch (IOException e) {
                 error(".token file could not be read: " + e.getMessage());
                 token = null;
             }
         } else {
             token = config.getString("BotToken");
-            DiscordSRV.debug("Using bot token supplied from config");
+            debug(() -> "Using bot token supplied from config");
         }
 
         if (StringUtils.isBlank(token) || "BOTTOKEN".equalsIgnoreCase(token)) {
@@ -601,7 +617,7 @@ public class DiscordSRV extends JavaPlugin {
             return;
         } else {
             // remove invalid characters
-            token = token.replaceAll("[^\\w\\d-_.]", "");
+            token = INVALID_TOKEN_REGEX.matcher(token).replaceAll("");
         }
 
         callbackThreadPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors(), pool -> {
@@ -973,15 +989,15 @@ public class DiscordSRV extends JavaPlugin {
                     String totalPlayers = Integer.toString(getTotalPlayerCount());
                     DiscordUtil.setTextChannelTopic(
                             getMainTextChannel(),
-                            LangUtil.Message.CHAT_CHANNEL_TOPIC_AT_SERVER_SHUTDOWN.toString()
-                                    .replaceAll("%time%|%date%", time)
+                            TIME_OR_DATE_TOKEN.matcher(LangUtil.Message.CHAT_CHANNEL_TOPIC_AT_SERVER_SHUTDOWN.toString())
+                                    .replaceAll(time)
                                     .replace("%serverversion%", serverVersion)
                                     .replace("%totalplayers%", totalPlayers)
                     );
                     DiscordUtil.setTextChannelTopic(
                             getConsoleChannel(),
-                            LangUtil.Message.CONSOLE_CHANNEL_TOPIC_AT_SERVER_SHUTDOWN.toString()
-                                    .replaceAll("%time%|%date%", time)
+                            TIME_OR_DATE_TOKEN.matcher(LangUtil.Message.CONSOLE_CHANNEL_TOPIC_AT_SERVER_SHUTDOWN.toString())
+                                    .replaceAll(time)
                                     .replace("%serverversion%", serverVersion)
                                     .replace("%totalplayers%", totalPlayers)
                     );
@@ -994,9 +1010,9 @@ public class DiscordSRV extends JavaPlugin {
                 Bukkit.getScheduler().cancelTasks(this);
                 for (BukkitWorker activeWorker : Bukkit.getScheduler().getActiveWorkers()) {
                     if (activeWorker.getOwner().equals(this)) {
-                        List<String> stackTrace = Arrays.stream(activeWorker.getThread().getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList());
-                        warning("a DiscordSRV scheduler task still active during onDisable: " + stackTrace.remove(0));
-                        debug(stackTrace);
+                        warning("a DiscordSRV scheduler task still active during onDisable: " + Arrays.stream(activeWorker.getThread().getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList())
+                                .remove(0));
+                        debugMultiple(() -> Arrays.stream(activeWorker.getThread().getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList()));
                     }
                 }
 
@@ -1163,7 +1179,7 @@ public class DiscordSRV extends JavaPlugin {
             cancellationDetector = null;
         }
 
-        if (config().getInt("DebugLevel") > 0) {
+        if (DEBUG_LEVEL_SUPPLIER.get() > 0) {
             cancellationDetector = new CancellationDetector<>(AsyncPlayerChatEvent.class);
             cancellationDetector.addListener((plugin, event) -> DiscordSRV.info("Plugin " + plugin.toString()
                     + " cancelled AsyncPlayerChatEvent (author: " + event.getPlayer().getName()
@@ -1174,16 +1190,16 @@ public class DiscordSRV extends JavaPlugin {
 
     public void processChatMessage(Player player, String message, String channel, boolean cancelled) {
         // log debug message to notify that a chat message was being processed
-        debug("Chat message received, canceled: " + cancelled);
+        debug(() -> "Chat message received, canceled: " + cancelled);
 
         if (player == null) {
-            debug("Received chat message was from a null sender, not processing message");
+            debug(() -> "Received chat message was from a null sender, not processing message");
             return;
         }
 
         // return if player doesn't have permission
         if (!GamePermissionUtil.hasPermission(player, "discordsrv.chat")) {
-            debug("User " + player.getName() + " sent a message but it was not delivered to Discord due to lack of permission");
+            debug(() -> "User " + player.getName() + " sent a message but it was not delivered to Discord due to lack of permission");
             return;
         }
 
@@ -1193,7 +1209,7 @@ public class DiscordSRV extends JavaPlugin {
                 boolean usingAdminChat = com.gmail.nossr50.api.ChatAPI.isUsingAdminChat(player);
                 boolean usingPartyChat = com.gmail.nossr50.api.ChatAPI.isUsingPartyChat(player);
                 if (usingAdminChat || usingPartyChat) {
-                    debug("Not processing message because message was from " + (usingAdminChat ? "admin" : "party") + " chat");
+                    debug(() -> "Not processing message because message was from " + (usingAdminChat ? "admin" : "party") + " chat");
                     return;
                 }
             }
@@ -1201,26 +1217,28 @@ public class DiscordSRV extends JavaPlugin {
 
         // return if event canceled
         if (config().getBoolean("RespectChatPlugins") && cancelled) {
-            debug("User " + player.getName() + " sent a message but it was not delivered to Discord because the chat event was canceled");
+            debug(() -> "User " + player.getName() + " sent a message but it was not delivered to Discord because the chat event was canceled");
             return;
         }
 
         // return if should not send in-game chat
         if (!config().getBoolean("DiscordChatChannelMinecraftToDiscord")) {
-            debug("User " + player.getName() + " sent a message but it was not delivered to Discord because DiscordChatChannelMinecraftToDiscord is false");
+            debug(() -> "User " + player.getName() + " sent a message but it was not delivered to Discord because DiscordChatChannelMinecraftToDiscord is false");
             return;
         }
 
         // return if doesn't match prefix filter
         String prefix = config().getString("DiscordChatChannelPrefixRequiredToProcessMessage");
         if (!DiscordUtil.strip(message).startsWith(prefix)) {
-            debug("User " + player.getName() + " sent a message but it was not delivered to Discord because the message didn't start with \"" + prefix + "\" (DiscordChatChannelPrefixRequiredToProcessMessage): \"" + message + "\"");
+            String finalMessage = message;
+            debug(() -> "User " + player.getName() + " sent a message but it was not delivered to Discord because the message didn't start with \"" + prefix + "\" (DiscordChatChannelPrefixRequiredToProcessMessage): \"" +
+                    finalMessage + "\"");
             return;
         }
 
         GameChatMessagePreProcessEvent preEvent = api.callEvent(new GameChatMessagePreProcessEvent(channel, message, player));
         if (preEvent.isCancelled()) {
-            DiscordSRV.debug("GameChatMessagePreProcessEvent was cancelled, message send aborted");
+            debug(() -> "GameChatMessagePreProcessEvent was cancelled, message send aborted");
             return;
         }
         channel = preEvent.getChannel(); // update channel from event in case any listeners modified it
@@ -1237,10 +1255,11 @@ public class DiscordSRV extends JavaPlugin {
         String username = DiscordUtil.strip(player.getName());
         if (!reserializer) username = DiscordUtil.escapeMarkdown(username);
 
-        String discordMessage = (hasGoodGroup
+        String messageTemplate = hasGoodGroup
                 ? LangUtil.Message.CHAT_TO_DISCORD.toString()
-                : LangUtil.Message.CHAT_TO_DISCORD_NO_PRIMARY_GROUP.toString())
-                .replaceAll("%time%|%date%", TimeUtil.timeStamp())
+                : LangUtil.Message.CHAT_TO_DISCORD_NO_PRIMARY_GROUP.toString();
+        String discordMessage = TIME_OR_DATE_TOKEN.matcher(messageTemplate)
+                .replaceAll(TimeUtil.timeStamp())
                 .replace("%channelname%", channel != null ? channel.substring(0, 1).toUpperCase() + channel.substring(1) : "")
                 .replace("%primarygroup%", userPrimaryGroup)
                 .replace("%username%", username)
@@ -1270,7 +1289,7 @@ public class DiscordSRV extends JavaPlugin {
 
         GameChatMessagePostProcessEvent postEvent = api.callEvent(new GameChatMessagePostProcessEvent(channel, discordMessage, player, preEvent.isCancelled()));
         if (postEvent.isCancelled()) {
-            DiscordSRV.debug("GameChatMessagePostProcessEvent was cancelled, message send aborted");
+            debug(() -> "GameChatMessagePostProcessEvent was cancelled, message send aborted");
             return;
         }
         channel = postEvent.getChannel(); // update channel from event in case any listeners modified it
@@ -1288,7 +1307,8 @@ public class DiscordSRV extends JavaPlugin {
             TextChannel destinationChannel = getDestinationTextChannelForGameChannelName(channel);
 
             if (destinationChannel == null) {
-                DiscordSRV.debug("Failed to find Discord channel to forward message from game channel " + channel);
+                String finalChannel = channel;
+                debug(() -> "Failed to find Discord channel to forward message from game channel " + finalChannel);
                 return;
             }
 
@@ -1373,7 +1393,8 @@ public class DiscordSRV extends JavaPlugin {
                             )
                     );
                 } else {
-                    DiscordSRV.debug("Invalid color hex: " + hex + " (in " + key + ".Embed.Color)");
+                    String finalHex = hex;
+                    debug(() -> "Invalid color hex: " + finalHex + " (in " + key + ".Embed.Color)");
                 }
             } else {
                 config().getOptionalInt(key + ".Embed.Color").map(Color::new).ifPresent(messageFormat::setColor);
@@ -1550,13 +1571,16 @@ public class DiscordSRV extends JavaPlugin {
         return responses;
     }
 
-    private static File playerDataFolder = null;
+    private static final AtomicReference<File> playerDataFolder = new AtomicReference<>();
     public static int getTotalPlayerCount() {
-        if (playerDataFolder == null && Bukkit.getWorlds().size() > 0) {
-            playerDataFolder = new File(Bukkit.getWorlds().get(0).getWorldFolder().getAbsolutePath(), "/playerdata");
+        if (playerDataFolder.get() == null && Bukkit.getWorlds().size() > 0) {
+            playerDataFolder.set(new File(Bukkit.getWorlds()
+                    .get(0)
+                    .getWorldFolder()
+                    .getAbsolutePath(), "/playerdata"));
         }
 
-        File[] playerFiles = playerDataFolder.listFiles(f -> f.getName().endsWith(".dat"));
+        File[] playerFiles = playerDataFolder.get().listFiles(f -> f.getName().endsWith(".dat"));
         return playerFiles != null ? playerFiles.length : 0;
     }
 

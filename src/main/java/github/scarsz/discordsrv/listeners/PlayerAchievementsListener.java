@@ -99,7 +99,7 @@ public class PlayerAchievementsListener {
 
         AchievementMessagePreProcessEvent preEvent = DiscordSRV.api.callEvent(new AchievementMessagePreProcessEvent(channelName, messageFormat, player, achievementName));
         if (preEvent.isCancelled()) {
-            DiscordSRV.debug("AchievementMessagePreProcessEvent was cancelled, message send aborted");
+            DiscordSRV.debug(() -> "AchievementMessagePreProcessEvent was cancelled, message send aborted");
             return;
         }
         // Update from event in case any listeners modified parameters
@@ -141,7 +141,7 @@ public class PlayerAchievementsListener {
 
         AchievementMessagePostProcessEvent postEvent = DiscordSRV.api.callEvent(new AchievementMessagePostProcessEvent(channelName, discordMessage, player, achievementName, messageFormat.isUseWebhooks(), webhookName, webhookAvatarUrl, preEvent.isCancelled()));
         if (postEvent.isCancelled()) {
-            DiscordSRV.debug("AchievementMessagePostProcessEvent was cancelled, message send aborted");
+            DiscordSRV.debug(() -> "AchievementMessagePostProcessEvent was cancelled, message send aborted");
             return;
         }
 

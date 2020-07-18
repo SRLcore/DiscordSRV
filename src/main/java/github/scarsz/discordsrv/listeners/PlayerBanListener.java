@@ -21,7 +21,6 @@ package github.scarsz.discordsrv.listeners;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.util.DiscordUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -38,15 +37,15 @@ public class PlayerBanListener implements Listener {
     public void onPlayerKick(PlayerKickEvent event) {
         Bukkit.getScheduler().scheduleSyncDelayedTask(DiscordSRV.getPlugin(), () -> {
             if (Bukkit.getBannedPlayers().contains(Bukkit.getOfflinePlayer(event.getPlayer().getUniqueId()))) {
-                if (event.getPlayer() instanceof OfflinePlayer) {
-                    if (!DiscordSRV.config().getBoolean("BanSynchronizationMinecraftToDiscord")) {
-                        DiscordSRV.debug("Not handling ban for player " + event.getPlayer().getName() + " (" + event.getPlayer().getUniqueId() + ") because doing so is disabled in the config");
-                        return;
-                    }
-
-                    DiscordSRV.debug("Handling ban for player " + event.getPlayer().getName() + " (" + event.getPlayer().getUniqueId() + ")");
-                    DiscordUtil.banMember(DiscordUtil.getMemberById(DiscordSRV.getPlugin().getAccountLinkManager().getDiscordId(event.getPlayer().getUniqueId())));
+                if (!DiscordSRV.config().getBoolean("BanSynchronizationMinecraftToDiscord")) {
+                    DiscordSRV.debug(() ->
+                            "Not handling ban for player " + event.getPlayer().getName() + " (" + event.getPlayer().getUniqueId() + ") because doing so is disabled in the config");
+                    return;
                 }
+
+                DiscordSRV.debug(() ->
+                        "Handling ban for player " + event.getPlayer().getName() + " (" + event.getPlayer().getUniqueId() + ")");
+                DiscordUtil.banMember(DiscordUtil.getMemberById(DiscordSRV.getPlugin().getAccountLinkManager().getDiscordId(event.getPlayer().getUniqueId())));
             }
         }, 20);
     }
@@ -54,7 +53,7 @@ public class PlayerBanListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (!DiscordSRV.config().getBoolean("BanSynchronizationMinecraftToDiscord")) {
-            DiscordSRV.debug("Not handling possible unban for player " + event.getPlayer().getName() + " (" + event.getPlayer().getUniqueId() + ") because doing so is disabled in the config");
+            DiscordSRV.debug(() -> "Not handling possible unban for player " + event.getPlayer().getName() + " (" + event.getPlayer().getUniqueId() + ") because doing so is disabled in the config");
             return;
         }
 
@@ -64,8 +63,8 @@ public class PlayerBanListener implements Listener {
         DiscordSRV.getPlugin().getMainGuild().retrieveBanById(discordId).queue(ban -> {
             DiscordSRV.info("Unbanning player " + event.getPlayer().getName() + " from Discord (ID " + discordId + ") because they aren't banned on the server");
             DiscordSRV.getPlugin().getMainGuild().unban(discordId).queue();
-        }, failure ->
-            DiscordSRV.debug("Failed to unban player " + event.getPlayer().getName() + ": " + failure.getMessage())
+        }, failure -> DiscordSRV.debug(() ->
+                        "Failed to unban player " + event.getPlayer().getName() + ": " + failure.getMessage())
         );
     }
 

@@ -32,7 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class CommandHelp {
 
-    private static List<ChatColor> disallowedChatColorCharacters = new ArrayList<ChatColor>() {{
+    private static final List<ChatColor> disallowedChatColorCharacters = new ArrayList<ChatColor>() {{
         add(ChatColor.BLACK);
         add(ChatColor.DARK_BLUE);
         add(ChatColor.GRAY);

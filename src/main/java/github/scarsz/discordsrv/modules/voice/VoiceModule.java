@@ -86,17 +86,17 @@ public class VoiceModule extends ListenerAdapter implements Listener {
 
     private void tick() {
         if (!lock.tryLock()) {
-            DiscordSRV.debug("Skipping voice module tick, a tick is already in progress");
+            DiscordSRV.debug(() -> "Skipping voice module tick, a tick is already in progress");
             return;
         }
 
         try {
             if (getCategory() == null) {
-                DiscordSRV.debug("Skipping voice module tick, category is null");
+                DiscordSRV.debug(() -> "Skipping voice module tick, category is null");
                 return;
             }
             if (getLobbyChannel() == null) {
-                DiscordSRV.debug("Skipping voice module tick, lobby channel is null");
+                DiscordSRV.debug(() -> "Skipping voice module tick, lobby channel is null");
                 return;
             }
 
@@ -125,14 +125,14 @@ public class VoiceModule extends ListenerAdapter implements Listener {
             Set<Player> oldDirtyPlayers = dirtyPlayers;
             dirtyPlayers = new HashSet<>();
             for (Player player : oldDirtyPlayers) {
-                DiscordSRV.debug("Dirty: " + player.getName());
+                DiscordSRV.debug(() -> "Dirty: " + player.getName());
 
                 Member member = getMember(player);
                 if (member == null || member.getVoiceState() == null
                         || member.getVoiceState().getChannel() == null
                         || member.getVoiceState().getChannel().getParent() == null
                         || !member.getVoiceState().getChannel().getParent().getId().equals(getCategory().getId())) {
-                    DiscordSRV.debug("Player " + player.getName() + " isn't connected to voice or isn't in the voice category or the player doesn't have a linked account (" + member + ")");
+                    DiscordSRV.debug(() -> "Player " + player.getName() + " isn't connected to voice or isn't in the voice category or the player doesn't have a linked account (" + member + ")");
                     continue;
                 }
 
@@ -142,7 +142,7 @@ public class VoiceModule extends ListenerAdapter implements Listener {
                         .forEach(network -> {
                             if (!network.getChannel().getMembers().contains(member)
                                     && !member.getVoiceState().getChannel().equals(network.getChannel())) {
-                                DiscordSRV.debug("Player " + player.getName() + " isn't in the right network channel but they are in the category, connecting");
+                                DiscordSRV.debug(() -> "Player " + player.getName() + " isn't in the right network channel but they are in the category, connecting");
                                 network.connect(player);
                             }
                         });
@@ -161,7 +161,7 @@ public class VoiceModule extends ListenerAdapter implements Listener {
                         })
                         .filter(network -> !network.getPlayers().contains(player))
                         .ifPresent(network -> {
-                            DiscordSRV.debug(player.getName() + " has entered network " + network + "'s influence, connecting");
+                            DiscordSRV.debug(() -> player.getName() + " has entered network " + network + "'s influence, connecting");
                             network.connect(player);
                         });
 
@@ -171,7 +171,7 @@ public class VoiceModule extends ListenerAdapter implements Listener {
                         .filter(network -> !network.playerIsInRange(player))
                         .collect(Collectors.toSet()) // needed to prevent concurrent modifications
                         .forEach(network -> {
-                            DiscordSRV.debug("Player " + player.getName() + " lost connection to " + network + ", disconnecting");
+                            DiscordSRV.debug(() -> "Player " + player.getName() + " lost connection to " + network + ", disconnecting");
                             network.disconnect(player);
                         });
 
@@ -191,7 +191,7 @@ public class VoiceModule extends ListenerAdapter implements Listener {
                         .collect(Collectors.toSet());
                 if (playersWithinRange.size() > 0) {
                     if (getCategory().getChannels().size() == 50) {
-                        DiscordSRV.debug("Can't create new voice network because category " + getCategory().getName() + " is full of channels");
+                        DiscordSRV.debug(() -> "Can't create new voice network because category " + getCategory().getName() + " is full of channels");
                         return;
                     }
 
@@ -302,11 +302,9 @@ public class VoiceModule extends ListenerAdapter implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        Bukkit.getScheduler().runTaskAsynchronously(DiscordSRV.getPlugin(), () -> {
-            networks.stream()
-                    .filter(network -> network.getPlayers().contains(event.getPlayer()))
-                    .forEach(network -> network.disconnect(event.getPlayer()));
-        });
+        Bukkit.getScheduler().runTaskAsynchronously(DiscordSRV.getPlugin(), () -> networks.stream()
+                .filter(network -> network.getPlayers().contains(event.getPlayer()))
+                .forEach(network -> network.disconnect(event.getPlayer())));
     }
 
     @Override

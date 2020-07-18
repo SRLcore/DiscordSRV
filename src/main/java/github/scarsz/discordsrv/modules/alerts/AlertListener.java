@@ -20,6 +20,7 @@ import org.bukkit.plugin.RegisteredListener;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class AlertListener implements Listener {
@@ -27,6 +28,7 @@ public class AlertListener implements Listener {
     private final RegisteredListener listener;
 
     private final List<Dynamic> alerts = new ArrayList<>();
+    public static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     public AlertListener() {
         listener = new RegisteredListener(
@@ -69,7 +71,7 @@ public class AlertListener implements Listener {
             if (stackTraceElement.getClassName().equals("com.destroystokyo.paper.event.player.PlayerHandshakeEvent")
                     && stackTraceElement.getMethodName().equals("<clinit>")) {
                 // Don't register PlayerHandshakeEvent since Paper then assumes we're handling logins
-                DiscordSRV.debug("Skipping registering HandlerList for Paper's PlayerHandshakeEvent for alerts");
+                DiscordSRV.debug(() -> "Skipping registering HandlerList for Paper's PlayerHandshakeEvent for alerts");
                 return;
             }
         }
@@ -140,7 +142,7 @@ public class AlertListener implements Listener {
 
             for (String trigger : triggers) {
                 if (trigger.startsWith("/")) {
-                    if (StringUtils.isBlank(command) || !command.toLowerCase().split("\\s+|$", 2)[0].equals(trigger.substring(1))) continue;
+                    if (StringUtils.isBlank(command) || !WHITESPACE_PATTERN.split(command.toLowerCase(), 2)[0].equals(trigger.substring(1))) continue;
                 } else {
                     // make sure the called event matches what this alert is supposed to trigger on
                     if (!event.getEventName().equalsIgnoreCase(trigger)) continue;
@@ -151,7 +153,7 @@ public class AlertListener implements Listener {
                     Dynamic ignoreCancelledDynamic = alert.get("IgnoreCancelled");
                     boolean ignoreCancelled = ignoreCancelledDynamic.isPresent() ? ignoreCancelledDynamic.as(boolean.class) : true;
                     if (ignoreCancelled) {
-                        DiscordSRV.debug("Not running alert for event " + event.getEventName() + ": event was cancelled");
+                        DiscordSRV.debug(() -> "Not running alert for event " + event.getEventName() + ": event was cancelled");
                         return;
                     }
                 }
@@ -159,7 +161,7 @@ public class AlertListener implements Listener {
                 Set<TextChannel> textChannels = new HashSet<>();
                 Dynamic textChannelsDynamic = alert.get("Channel");
                 if (textChannelsDynamic == null) {
-                    DiscordSRV.debug("Not running alert for trigger " + trigger + ": no target channel was defined");
+                    DiscordSRV.debug(() -> "Not running alert for trigger " + trigger + ": no target channel was defined");
                     return;
                 }
                 if (textChannelsDynamic.isList()) {
@@ -168,8 +170,8 @@ public class AlertListener implements Listener {
                             .map(s -> {
                                 TextChannel target = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(s);
                                 if (target == null) {
-                                    DiscordSRV.debug("Not sending alert for trigger " + trigger + " to target channel "
-                                            + s + ": TextChannel was not available");
+                                    DiscordSRV.debug(() -> "Not sending alert for trigger " + trigger + " to target channel "
+                                                                        + s + ": TextChannel was not available");
                                 }
                                 return target;
                             })
@@ -180,7 +182,7 @@ public class AlertListener implements Listener {
                 }
                 textChannels.removeIf(Objects::isNull);
                 if (textChannels.size() == 0) {
-                    DiscordSRV.debug("Not running alert for trigger " + trigger + ": no target channel was defined");
+                    DiscordSRV.debug(() -> "Not running alert for trigger " + trigger + ": no target channel was defined");
                     return;
                 }
 
@@ -206,7 +208,7 @@ public class AlertListener implements Listener {
                                     .withVariable("channel", textChannel)
                                     .withVariable("jda", DiscordUtil.getJda())
                                     .evaluate(event, Boolean.class);
-                            DiscordSRV.debug("Condition \"" + expression + "\" -> " + value);
+                            DiscordSRV.debug(() -> "Condition \"" + expression + "\" -> " + value);
                             if (value != null && !value) {
                                 allConditionsMet = false;
                                 break;

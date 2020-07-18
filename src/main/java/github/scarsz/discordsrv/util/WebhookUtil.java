@@ -42,7 +42,7 @@ public class WebhookUtil {
             // get rid of all previous webhooks created by DiscordSRV if they don't match a good channel
             for (Guild guild : DiscordSRV.getPlugin().getJda().getGuilds()) {
                 if (!guild.getSelfMember().hasPermission(Permission.MANAGE_WEBHOOKS)) {
-                    DiscordSRV.debug("Unable to manage webhooks guild-wide in " + guild);
+                    DiscordSRV.debug(() -> "Unable to manage webhooks guild-wide in " + guild);
                     continue;
                 }
 
@@ -131,7 +131,8 @@ public class WebhookUtil {
                 int status = request.code();
                 if (status == 404) {
                     // 404 = Invalid Webhook (most likely to have been deleted)
-                    DiscordSRV.debug("Webhook delivery returned 404, marking webhooks url's as invalid to let them regenerate" + (allowSecondAttempt ? " & trying again" : ""));
+                    DiscordSRV.debug(() ->
+                            "Webhook delivery returned 404, marking webhooks url's as invalid to let them regenerate" + (allowSecondAttempt ? " & trying again" : ""));
                     invalidWebhookUrlForChannel(channel); // tell it to get rid of the urls & get new ones
                     if (allowSecondAttempt) deliverMessage(channel, webhookName, webhookAvatarUrl, message, embed, false);
                     return;
@@ -142,17 +143,18 @@ public class WebhookUtil {
                     if (jsonObj.has("code")) {
                         // 10015 = unknown webhook, https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes
                         if (jsonObj.getInt("code") == 10015) {
-                            DiscordSRV.debug("Webhook delivery returned 10015 (Unknown Webhook), marking webhooks url's as invalid to let them regenerate" + (allowSecondAttempt ? " & trying again" : ""));
+                            DiscordSRV.debug(() ->
+                                    "Webhook delivery returned 10015 (Unknown Webhook), marking webhooks url's as invalid to let them regenerate" + (allowSecondAttempt ? " & trying again" : ""));
                             invalidWebhookUrlForChannel(channel); // tell it to get rid of the urls & get new ones
                             if (allowSecondAttempt) deliverMessage(channel, webhookName, webhookAvatarUrl, message, embed, false);
                             return;
                         }
                     }
                 } catch (Throwable ignored) {}
-                DiscordSRV.debug("Received API response for webhook message delivery: " + request.code());
+                DiscordSRV.debug(() -> "Received API response for webhook message delivery: " + request.code());
             } catch (Exception e) {
                 DiscordSRV.error("Failed to deliver webhook message to Discord: " + e.getMessage());
-                DiscordSRV.debug(ExceptionUtils.getMessage(e));
+                DiscordSRV.debug(() -> ExceptionUtils.getMessage(e));
                 e.printStackTrace();
             }
         });
@@ -239,7 +241,7 @@ public class WebhookUtil {
     public static Webhook createWebhook(TextChannel channel, String name) {
         try {
             Webhook webhook = channel.createWebhook(name).complete();
-            DiscordSRV.debug("Created webhook " + webhook.getName() + " to deliver messages to text channel #" + channel.getName());
+            DiscordSRV.debug(() -> "Created webhook " + webhook.getName() + " to deliver messages to text channel #" + channel.getName());
             return webhook;
         } catch (Exception e) {
             DiscordSRV.error("Failed to create webhook " + name + " for message delivery: " + e.getMessage());

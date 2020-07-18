@@ -24,7 +24,6 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
 
-@SuppressWarnings("unchecked")
 public class SuperVanishHook implements VanishHook {
 
     @Override

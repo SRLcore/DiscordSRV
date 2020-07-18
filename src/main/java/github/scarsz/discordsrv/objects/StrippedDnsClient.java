@@ -149,7 +149,7 @@ public class StrippedDnsClient extends AbstractDnsClient {
         final List<InetAddress> dnsServerAddresses = getServerAddresses();
 
         final MiniDnsFuture.InternalMiniDnsFuture<DnsMessage, IOException> future = new MiniDnsFuture.InternalMiniDnsFuture<>();
-        final List<IOException> exceptions = Collections.synchronizedList(new ArrayList<IOException>(dnsServerAddresses.size()));
+        final List<IOException> exceptions = Collections.synchronizedList(new ArrayList<>(dnsServerAddresses.size()));
 
         // Filter loop.
         Iterator<InetAddress> it = dnsServerAddresses.iterator();
@@ -158,7 +158,6 @@ public class StrippedDnsClient extends AbstractDnsClient {
             if (nonRaServers.contains(dns)) {
                 it.remove();
                 LOGGER.finer("Skipping " + dns + " because it was marked as \"recursion not available\"");
-                continue;
             }
         }
 
@@ -314,6 +313,8 @@ public class StrippedDnsClient extends AbstractDnsClient {
             case v6only:
                 dnsServers.addAll(ipv6DnsServer);
                 break;
+            default:
+                throw new IllegalStateException("Unexpected setting: " + setting);
         }
         return dnsServers;
     }

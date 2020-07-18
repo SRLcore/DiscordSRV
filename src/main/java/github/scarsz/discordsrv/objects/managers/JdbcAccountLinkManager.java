@@ -46,7 +46,6 @@ public class JdbcAccountLinkManager extends AccountLinkManager {
     private final static Pattern JDBC_PATTERN = Pattern.compile("([a-z]+)://(.+):(.+)/([A-z0-9]+)"); // https://regex101.com/r/7PSgv6
 
     private final Connection connection;
-    private final String database;
     private final String accountsTable;
     private final String codesTable;
 
@@ -104,7 +103,7 @@ public class JdbcAccountLinkManager extends AccountLinkManager {
         if (StringUtils.isNotBlank(jdbcPassword)) properties.put("password", jdbcPassword);
         this.connection = mysqlDriver.connect(jdbc, properties);
 
-        database = connection.getCatalog();
+        String database = connection.getCatalog();
         String tablePrefix = DiscordSRV.config().getString("Experiment_JdbcTablePrefix");
         if (StringUtils.isBlank(tablePrefix)) tablePrefix = ""; else tablePrefix += "_";
         accountsTable = "`" + database + "`." + tablePrefix + "accounts";
@@ -462,7 +461,7 @@ public class JdbcAccountLinkManager extends AccountLinkManager {
 
     @Override
     public void link(String discordId, UUID uuid) {
-        DiscordSRV.debug("JDBC Account link: " + discordId + ": " + uuid);
+        DiscordSRV.debug(() -> "JDBC Account link: " + discordId + ": " + uuid);
 
         // make sure the user isn't linked
         unlink(discordId);

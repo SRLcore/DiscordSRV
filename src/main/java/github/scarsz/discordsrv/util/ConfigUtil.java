@@ -32,6 +32,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -114,7 +115,7 @@ public class ConfigUtil {
             DiscordSRV.info("Successfully migrated configuration files to version " + pluginVersionRaw);
         } catch (Exception e) {
             DiscordSRV.error("Failed migrating configs: " + e.getMessage());
-            DiscordSRV.debug(ExceptionUtils.getStackTrace(e));
+            DiscordSRV.debug(() -> ExceptionUtils.getStackTrace(e));
         }
     }
 
@@ -133,8 +134,8 @@ public class ConfigUtil {
 
     private static void copyYmlValues(File from, File to, boolean allowSpacedOptions) {
         try {
-            List<String> oldConfigLines = Arrays.stream(FileUtils.readFileToString(from, StandardCharsets.UTF_8).split(System.lineSeparator() + "|\n")).collect(Collectors.toList());
-            List<String> newConfigLines = Arrays.stream(FileUtils.readFileToString(to, StandardCharsets.UTF_8).split(System.lineSeparator() + "|\n")).collect(Collectors.toList());
+            List<String> oldConfigLines = Files.lines(from.toPath()).collect(Collectors.toList());
+            List<String> newConfigLines = Files.lines(to.toPath()).collect(Collectors.toList());
 
             Map<String, String> oldConfigMap = new HashMap<>();
             for (String line : oldConfigLines) {
@@ -156,10 +157,14 @@ public class ConfigUtil {
                 newConfigMap.put(key, value);
             }
 
-            for (String key : oldConfigMap.keySet()) {
+            for (Map.Entry<String, String> entry : oldConfigMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
                 if (newConfigMap.containsKey(key) && !key.startsWith("ConfigVersion")) {
-                    DiscordSRV.debug("Migrating config option " + key + " with value " + (DebugUtil.SENSITIVE_OPTIONS.stream().anyMatch(key::equalsIgnoreCase) ? "OMITTED" : oldConfigMap.get(key)) + " to new config");
-                    newConfigMap.put(key, oldConfigMap.get(key));
+                    DiscordSRV.debug(() -> String.format("Migrating config option %s with value %s to new config", key,
+                            DebugUtil.SENSITIVE_OPTIONS.stream().anyMatch(key::equalsIgnoreCase) ? "OMITTED" :
+                                    value));
+                    newConfigMap.put(key, value);
                 }
             }
 

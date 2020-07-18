@@ -31,7 +31,7 @@ public class CommandReload {
             helpMessage = "Reloads the config of DiscordSRV",
             permission = "discordsrv.reload"
     )
-    public static void execute(CommandSender sender, String[] args) {
+    public static void execute(CommandSender sender) {
         DiscordSRV.getPlugin().reloadConfig();
         DiscordSRV.getPlugin().reloadCancellationDetector();
         DiscordSRV.getPlugin().reloadChannels();

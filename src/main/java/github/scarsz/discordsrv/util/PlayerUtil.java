@@ -31,9 +31,12 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PlayerUtil {
+
+    public static final Pattern NOT_ALNUM_UNDERSCORE_AT = Pattern.compile("[^a-zA-Z0-9_@]");
 
     public static List<Player> getOnlinePlayers() {
         return getOnlinePlayers(false);
@@ -69,14 +72,10 @@ public class PlayerUtil {
         }
     }
 
-    private static Sound notificationSound = null;
-    static {
-        for (Sound sound : Sound.class.getEnumConstants())
-            if (sound.name().contains("PLING")) notificationSound = sound;
-
-        // this'll never occur, but, in the case that it really didn't find a notification sound, go with a UI button click
-        if (notificationSound == null) notificationSound = Sound.UI_BUTTON_CLICK;
-    }
+    private static final Sound notificationSound = Arrays.stream(Sound.values())
+            .filter(sound -> sound.name().contains("PLING"))
+            .findAny()
+            .orElse(Sound.UI_BUTTON_CLICK);
 
     /**
      * Notify online players of mentions after a message was broadcasted to them
@@ -89,12 +88,12 @@ public class PlayerUtil {
                                                              // thus, default to a (hopefully) always true predicate
 
         if (StringUtils.isBlank(message)) {
-            DiscordSRV.debug("Tried notifying players with null or blank message");
+            DiscordSRV.debug(() -> "Tried notifying players with null or blank message");
             return;
         }
 
         List<String> splitMessage =
-                Arrays.stream(DiscordUtil.strip(message).replaceAll("[^a-zA-Z0-9_@]", " ").split(" ")) // split message by groups of alphanumeric characters & underscores
+                Arrays.stream(NOT_ALNUM_UNDERSCORE_AT.matcher(DiscordUtil.strip(message)).replaceAll(" ").split(" ")) // split message by groups of alphanumeric characters & underscores
                         .filter(StringUtils::isNotBlank) // not actually needed but it cleans up the stream a lot
                         .map(String::toLowerCase) // map everything to be lower case because we don't care about case when finding player names
                         .map(s -> {

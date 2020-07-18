@@ -20,6 +20,7 @@ package github.scarsz.discordsrv.util;
 
 import alexh.weak.Dynamic;
 import com.github.kevinsawicki.http.HttpRequest;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import github.scarsz.configuralize.Language;
@@ -62,7 +63,7 @@ import java.util.zip.ZipOutputStream;
 
 public class DebugUtil {
 
-    public static final List<String> SENSITIVE_OPTIONS = Arrays.asList(
+    public static final List<String> SENSITIVE_OPTIONS = ImmutableList.of(
             "BotToken", "Experiment_JdbcAccountLinkBackend", "Experiment_JdbcUsername", "Experiment_JdbcPassword"
     );
     public static int initializationCount = 0;
@@ -158,14 +159,17 @@ public class DebugUtil {
 
     private static String getRelevantLinesFromServerLog() {
         List<String> output = new LinkedList<>();
-        try {
-            FileReader fr = new FileReader(new File("logs/latest.log"));
-            BufferedReader br = new BufferedReader(fr);
+        try (FileReader fr = new FileReader(new File("logs/latest.log"));
+             BufferedReader br = new BufferedReader(fr)) {
             boolean done = false;
             while (!done) {
                 String line = br.readLine();
-                if (line == null) done = true;
-                if (line != null && line.toLowerCase().contains("discordsrv")) output.add(DiscordUtil.aggressiveStrip(line));
+                if (line == null) {
+                    done = true;
+                }
+                if (line != null && line.toLowerCase().contains("discordsrv")) {
+                    output.add(DiscordUtil.aggressiveStrip(line));
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

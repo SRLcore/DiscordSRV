@@ -29,7 +29,7 @@ public class DeathMessagePostProcessEvent extends GameEvent implements Cancellab
 
     @Getter @Setter private boolean cancelled;
 
-    @Getter private String deathMessage;
+    @Getter private final String deathMessage;
     @Getter @Setter private String channel;
 
     @Getter @Setter private Message discordMessage;

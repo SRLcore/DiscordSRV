@@ -59,7 +59,7 @@ public class PlayerJoinLeaveListener implements Listener {
         }
 
         if (PlayerUtil.isVanished(player)) {
-            DiscordSRV.debug("Not sending a join message for " + event.getPlayer().getName() + " because a vanish plugin reported them as vanished");
+            DiscordSRV.debug(() -> "Not sending a join message for " + event.getPlayer().getName() + " because a vanish plugin reported them as vanished");
             return;
         }
 
@@ -86,7 +86,7 @@ public class PlayerJoinLeaveListener implements Listener {
         Bukkit.getScheduler().runTaskLater(DiscordSRV.getPlugin(), () -> {
             TextChannel textChannel = DiscordSRV.getPlugin().getMainTextChannel();
             if (textChannel == null) {
-                DiscordSRV.debug("Not sending join message, the main text channel is null");
+                DiscordSRV.debug(() -> "Not sending join message, the main text channel is null");
                 return;
             }
 
@@ -136,7 +136,7 @@ public class PlayerJoinLeaveListener implements Listener {
     public void PlayerQuitEvent(PlayerQuitEvent event) {
         final Player player = event.getPlayer();
         if (PlayerUtil.isVanished(player)) {
-            DiscordSRV.debug("Not sending a quit message for " + event.getPlayer().getName() + " because a vanish plugin reported them as vanished");
+            DiscordSRV.debug(() -> "Not sending a quit message for " + event.getPlayer().getName() + " because a vanish plugin reported them as vanished");
             return;
         }
 
@@ -157,7 +157,7 @@ public class PlayerJoinLeaveListener implements Listener {
 
         TextChannel textChannel = DiscordSRV.getPlugin().getMainTextChannel();
         if (textChannel == null) {
-            DiscordSRV.debug("Not sending quit message, the main text channel is null");
+            DiscordSRV.debug(() -> "Not sending quit message, the main text channel is null");
             return;
         }
 

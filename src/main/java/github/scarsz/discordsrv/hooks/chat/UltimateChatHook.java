@@ -75,7 +75,7 @@ public class UltimateChatHook implements ChatHook {
             try {
                 ultimateFancyClass = Class.forName("br.net.fabiozumbi12.UltimateChat.Bukkit.util.UltimateFancy");
             } catch (ClassNotFoundException ignore) {
-                DiscordSRV.debug("No UltimateFancy class found to use for UltimateChat hook");
+                DiscordSRV.debug(() -> "No UltimateFancy class found to use for UltimateChat hook");
                 return;
             }
         }
@@ -84,7 +84,7 @@ public class UltimateChatHook implements ChatHook {
         try {
             ultimateFancyConstructor = ultimateFancyClass.getDeclaredConstructor(String.class);
         } catch (NoSuchMethodException e) {
-            DiscordSRV.debug("No UltimateFancy constructor found to use for UltimateChat hook");
+            DiscordSRV.debug(() -> "No UltimateFancy constructor found to use for UltimateChat hook");
             return;
         }
 
@@ -96,7 +96,7 @@ public class UltimateChatHook implements ChatHook {
                             : ChatColor.translateAlternateColorCodes('&', plainMessage)
             );
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            DiscordSRV.debug("Failed to initialize UltimateFancy in UltimateChat hook: " + e.toString());
+            DiscordSRV.debug(() -> "Failed to initialize UltimateFancy in UltimateChat hook: " + e.toString());
             return;
         }
 
@@ -104,14 +104,14 @@ public class UltimateChatHook implements ChatHook {
         try {
             sendMessageMethod = UCChannel.class.getMethod("sendMessage", ConsoleCommandSender.class, ultimateFancyClass, boolean.class);
         } catch (NoSuchMethodException e) {
-            DiscordSRV.debug("Failed to get sendMessage method of UCChannel in UltimateChat hook");
+            DiscordSRV.debug(() -> "Failed to get sendMessage method of UCChannel in UltimateChat hook");
             return;
         }
 
         try {
             sendMessageMethod.invoke(chatChannel, Bukkit.getServer().getConsoleSender(), ultimateFancy, true);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            DiscordSRV.debug("Failed to invoke sendMessage on UCChannel in UltimateChat hook: " + e.toString());
+            DiscordSRV.debug(() -> "Failed to invoke sendMessage on UCChannel in UltimateChat hook: " + e.toString());
             return;
         }
 

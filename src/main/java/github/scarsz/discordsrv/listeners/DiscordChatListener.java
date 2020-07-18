@@ -97,19 +97,19 @@ public class DiscordChatListener extends ListenerAdapter {
 
         // block bots
         if (DiscordSRV.config().getBoolean("DiscordChatChannelBlockBots") && event.getAuthor().isBot()) {
-            DiscordSRV.debug("Received Discord message from bot " + event.getAuthor() + " but DiscordChatChannelBlockBots is on");
+            DiscordSRV.debug(() -> "Received Discord message from bot " + event.getAuthor() + " but DiscordChatChannelBlockBots is on");
             return;
         }
 
         // blocked ids
         if (DiscordSRV.config().getStringList("DiscordChatChannelBlockedIds").contains(event.getAuthor().getId())) {
-            DiscordSRV.debug("Received Discord message from user " + event.getAuthor() + " but they are on the DiscordChatChannelBlockedIds list");
+            DiscordSRV.debug(() -> "Received Discord message from user " + event.getAuthor() + " but they are on the DiscordChatChannelBlockedIds list");
             return;
         }
 
         DiscordGuildMessagePreProcessEvent preEvent = DiscordSRV.api.callEvent(new DiscordGuildMessagePreProcessEvent(event));
         if (preEvent.isCancelled()) {
-            DiscordSRV.debug("DiscordGuildMessagePreProcessEvent was cancelled, message send aborted");
+            DiscordSRV.debug(() -> "DiscordGuildMessagePreProcessEvent was cancelled, message send aborted");
             return;
         }
 
@@ -142,7 +142,7 @@ public class DiscordChatListener extends ListenerAdapter {
                 if (DiscordSRV.config().getBoolean("Experiment_MCDiscordReserializer_ToMinecraft")) placedMessage = DiscordUtil.convertMentionsToNames(placedMessage);
                 DiscordGuildMessagePostProcessEvent postEvent = DiscordSRV.api.callEvent(new DiscordGuildMessagePostProcessEvent(event, preEvent.isCancelled(), placedMessage));
                 if (postEvent.isCancelled()) {
-                    DiscordSRV.debug("DiscordGuildMessagePostProcessEvent was cancelled, attachment send aborted");
+                    DiscordSRV.debug(() -> "DiscordGuildMessagePostProcessEvent was cancelled, attachment send aborted");
                     return;
                 }
                 DiscordSRV.getPlugin().broadcastMessageToMinecraftServer(DiscordSRV.getPlugin().getDestinationGameChannelNameForTextChannel(event.getChannel()), placedMessage, event.getAuthor());
@@ -157,7 +157,7 @@ public class DiscordChatListener extends ListenerAdapter {
         for (String phrase : DiscordSRV.config().getStringList("DiscordChatChannelBlockedPhrases")) {
             if (StringUtils.isEmpty(phrase)) continue; // don't want to block every message from sending
             if (event.getMessage().getContentRaw().contains(phrase)) {
-                DiscordSRV.debug("Received message from Discord that contained a block phrase (" + phrase + "), message send aborted");
+                DiscordSRV.debug(() -> "Received message from Discord that contained a block phrase (" + phrase + "), message send aborted");
                 return;
             }
         }
@@ -179,8 +179,7 @@ public class DiscordChatListener extends ListenerAdapter {
                 ? LangUtil.Message.CHAT_TO_MINECRAFT.toString()
                 : LangUtil.Message.CHAT_TO_MINECRAFT_NO_ROLE.toString();
 
-        String finalMessage = message != null ? message : "<blank message>";
-        formatMessage = replacePlaceholders(formatMessage, event, selectedRoles, finalMessage);
+        formatMessage = replacePlaceholders(formatMessage, event, selectedRoles, message);
 
         // translate color codes
         formatMessage = ChatColor.translateAlternateColorCodes('&', formatMessage);
@@ -196,10 +195,11 @@ public class DiscordChatListener extends ListenerAdapter {
 
         DiscordGuildMessagePostProcessEvent postEvent = DiscordSRV.api.callEvent(new DiscordGuildMessagePostProcessEvent(event, preEvent.isCancelled(), formatMessage));
         if (postEvent.isCancelled()) {
-            DiscordSRV.debug("DiscordGuildMessagePostProcessEvent was cancelled, message send aborted");
+            DiscordSRV.debug(() -> "DiscordGuildMessagePostProcessEvent was cancelled, message send aborted");
             return;
         }
 
+        final String finalMessage = message;
         DiscordSRV.getPlugin().getPluginHooks().stream()
                 .filter(pluginHook -> pluginHook instanceof DynmapHook)
                 .map(pluginHook -> (DynmapHook) pluginHook)
@@ -326,13 +326,12 @@ public class DiscordChatListener extends ListenerAdapter {
                 String e = LangUtil.Message.CHAT_CHANNEL_COMMAND_ERROR.toString()
                         .replace("%user%", event.getAuthor().getName())
                         .replace("%error%", "no permission");
-                event.getAuthor().openPrivateChannel().queue(dm -> {
-                    dm.sendMessage(e).queue(null, t -> {
-                        DiscordSRV.debug("Failed to send DM to " + event.getAuthor() + ": " + t.getMessage());
-                        event.getChannel().sendMessage(e).queue();
-                    });
-                }, t -> {
-                    DiscordSRV.debug("Failed to open DM conversation with " + event.getAuthor() + ": " + t.getMessage());
+                event.getAuthor().openPrivateChannel().queue(dm -> dm.sendMessage(e).queue(null, t -> {
+                    DiscordSRV.debug(() -> "Failed to send DM to " + event.getAuthor() + ": " + t.getMessage());
+                    event.getChannel().sendMessage(e).queue();
+                }), t -> {
+                    DiscordSRV.debug(() ->
+                            "Failed to open DM conversation with " + event.getAuthor() + ": " + t.getMessage());
                     event.getChannel().sendMessage(e).queue();
                 });
             }
@@ -368,13 +367,12 @@ public class DiscordChatListener extends ListenerAdapter {
                 String e = LangUtil.Message.CHAT_CHANNEL_COMMAND_ERROR.toString()
                         .replace("%user%", event.getAuthor().getName())
                         .replace("%error%", "command is not able to be used");
-                event.getAuthor().openPrivateChannel().queue(dm -> {
-                    dm.sendMessage(e).queue(null, t -> {
-                        DiscordSRV.debug("Failed to send DM to " + event.getAuthor() + ": " + t.getMessage());
-                        event.getChannel().sendMessage(e).queue();
-                    });
-                }, t -> {
-                    DiscordSRV.debug("Failed to open DM conversation with " + event.getAuthor() + ": " + t.getMessage());
+                event.getAuthor().openPrivateChannel().queue(dm -> dm.sendMessage(e).queue(null, t -> {
+                    DiscordSRV.debug(() -> String.format("Failed to send DM to %s: %s", event.getAuthor(), t.getMessage()));
+                    event.getChannel().sendMessage(e).queue();
+                }), t -> {
+                    DiscordSRV.debug(() ->
+                            String.format("Failed to open DM conversation with %s: %s", event.getAuthor(), t.getMessage()));
                     event.getChannel().sendMessage(e).queue();
                 });
             }
@@ -387,7 +385,9 @@ public class DiscordChatListener extends ListenerAdapter {
             try {
                 FileUtils.writeStringToFile(
                     logFile,
-                    "[" + TimeUtil.timeStamp() + " | ID " + event.getAuthor().getId() + "] " + event.getAuthor().getName() + ": " + event.getMessage().getContentRaw() + System.lineSeparator(),
+                        String.format("[%s | ID %s] %s: %s%s", TimeUtil.timeStamp(), event.getAuthor()
+                                .getId(), event.getAuthor().getName(), event.getMessage()
+                                .getContentRaw(), System.lineSeparator()),
                     StandardCharsets.UTF_8,
                     true
                 );
