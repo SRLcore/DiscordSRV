@@ -19,7 +19,7 @@
 package github.scarsz.discordsrv.objects.threads;
 
 import github.scarsz.discordsrv.DiscordSRV;
-import github.scarsz.discordsrv.objects.Lag;
+import github.scarsz.discordsrv.objects.TickMonitor;
 import github.scarsz.discordsrv.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
@@ -86,7 +86,7 @@ public class ChannelTopicUpdater extends Thread {
                      .replace("%usedmemorygb%", notNull(mem.get("usedGB")))
                      .replace("%totalmemorygb%", notNull(mem.get("totalGB")))
                      .replace("%maxmemorygb%", notNull(mem.get("maxGB")))
-                     .replace("%tps%", notNull(Lag.getTPSString()));
+                     .replace("%tps%", notNull(TickMonitor.getInstance().getTPSString()));
 
         return input;
     }
