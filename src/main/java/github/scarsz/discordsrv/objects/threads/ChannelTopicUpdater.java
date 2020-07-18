@@ -69,7 +69,7 @@ public class ChannelTopicUpdater extends Thread {
 
         final Map<String, String> mem = MemUtil.get();
 
-        input = input.replaceAll("%time%|%date%", notNull(TimeUtil.timeStamp()))
+        input = input.replaceAll("%time%|%date%", notNull(TimeUtil.timestamp()))
                      .replace("%playercount%", notNull(Integer.toString(PlayerUtil.getOnlinePlayers(true).size())))
                      .replace("%playermax%", notNull(Integer.toString(Bukkit.getMaxPlayers())))
                      .replace("%totalplayers%", notNull(Integer.toString(DiscordSRV.getTotalPlayerCount())))

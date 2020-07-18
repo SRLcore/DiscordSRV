@@ -18,28 +18,20 @@
 
 package github.scarsz.discordsrv.util;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 public class TimeUtil {
 
-    private static final Date date = new Date();
-    private static final SimpleDateFormat timestampFormat = new SimpleDateFormat("EEE, d. MMM yyyy HH:mm:ss z");
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-    public static String format(String format) {
-        return format(new SimpleDateFormat(format));
-    }
-    public static String format(SimpleDateFormat format) {
-        date.setTime(System.currentTimeMillis());
-        return format.format(date);
-    }
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter timestampFormatter =
+            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss z");
 
     public static String date() {
-        return format(dateFormat);
-    }
-    public static String timeStamp() {
-        return format(timestampFormat);
+        return dateFormatter.format(Instant.now());
     }
 
+    public static String timestamp() {
+        return timestampFormatter.format(Instant.now());
+    }
 }

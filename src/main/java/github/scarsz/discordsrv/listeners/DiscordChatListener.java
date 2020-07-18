@@ -385,7 +385,7 @@ public class DiscordChatListener extends ListenerAdapter {
             try {
                 FileUtils.writeStringToFile(
                     logFile,
-                        String.format("[%s | ID %s] %s: %s%s", TimeUtil.timeStamp(), event.getAuthor()
+                        String.format("[%s | ID %s] %s: %s%s", TimeUtil.timestamp(), event.getAuthor()
                                 .getId(), event.getAuthor().getName(), event.getMessage()
                                 .getContentRaw(), System.lineSeparator()),
                     StandardCharsets.UTF_8,

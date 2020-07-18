@@ -99,7 +99,7 @@ public class PlayerJoinLeaveListener implements Listener {
             BiFunction<String, Boolean, String> translator = (content, needsEscape) -> {
                 if (content == null) return null;
                 content = content
-                        .replaceAll("%time%|%date%", TimeUtil.timeStamp())
+                        .replaceAll("%time%|%date%", TimeUtil.timestamp())
                         .replace("%message%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(message) : message))
                         .replace("%username%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(name) : name))
                         .replace("%displayname%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(displayName) : displayName))
@@ -171,7 +171,7 @@ public class PlayerJoinLeaveListener implements Listener {
         BiFunction<String, Boolean, String> translator = (content, needsEscape) -> {
             if (content == null) return null;
             content = content
-                    .replaceAll("%time%|%date%", TimeUtil.timeStamp())
+                    .replaceAll("%time%|%date%", TimeUtil.timestamp())
                     .replace("%message%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(message) : message))
                     .replace("%username%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(name) : name))
                     .replace("%displayname%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(displayName) : displayName))

@@ -87,7 +87,7 @@ public class DiscordConsoleListener extends ListenerAdapter {
             try {
                 FileUtils.writeStringToFile(
                     logFile,
-                    "[" + TimeUtil.timeStamp() + " | ID " + event.getAuthor().getId() + "] " + event.getAuthor().getName() + ": " + event.getMessage().getContentRaw() + System.lineSeparator(),
+                    "[" + TimeUtil.timestamp() + " | ID " + event.getAuthor().getId() + "] " + event.getAuthor().getName() + ": " + event.getMessage().getContentRaw() + System.lineSeparator(),
                     StandardCharsets.UTF_8,
                     true
                 );

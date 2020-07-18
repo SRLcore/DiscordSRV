@@ -244,7 +244,7 @@ public class AlertListener implements Listener {
                                     return TickMonitor.getInstance().getTPSString();
                                 case "time":
                                 case "date":
-                                    return TimeUtil.timeStamp();
+                                    return TimeUtil.timestamp();
                                 case "ping":
                                     return player != null ? PlayerUtil.getPing(player) : "-1";
                                 case "name":

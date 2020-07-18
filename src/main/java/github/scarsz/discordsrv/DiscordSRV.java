@@ -984,7 +984,7 @@ public class DiscordSRV extends JavaPlugin {
             executor.invokeAll(Collections.singletonList(() -> {
                 // set server shutdown topics if enabled
                 if (config().getBoolean("ChannelTopicUpdaterChannelTopicsAtShutdownEnabled")) {
-                    String time = TimeUtil.timeStamp();
+                    String time = TimeUtil.timestamp();
                     String serverVersion = Bukkit.getBukkitVersion();
                     String totalPlayers = Integer.toString(getTotalPlayerCount());
                     DiscordUtil.setTextChannelTopic(
@@ -1259,7 +1259,7 @@ public class DiscordSRV extends JavaPlugin {
                 ? LangUtil.Message.CHAT_TO_DISCORD.toString()
                 : LangUtil.Message.CHAT_TO_DISCORD_NO_PRIMARY_GROUP.toString();
         String discordMessage = TIME_OR_DATE_TOKEN.matcher(messageTemplate)
-                .replaceAll(TimeUtil.timeStamp())
+                .replaceAll(TimeUtil.timestamp())
                 .replace("%channelname%", channel != null ? channel.substring(0, 1).toUpperCase() + channel.substring(1) : "")
                 .replace("%primarygroup%", userPrimaryGroup)
                 .replace("%username%", username)

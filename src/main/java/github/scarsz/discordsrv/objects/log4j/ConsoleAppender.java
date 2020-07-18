@@ -114,7 +114,7 @@ public class ConsoleAppender extends AbstractAppender {
 
         // apply formatting
         line = LangUtil.Message.CONSOLE_CHANNEL_LINE.toString()
-                .replace("%date%", TimeUtil.timeStamp())
+                .replace("%date%", TimeUtil.timestamp())
                 .replace("%level%", e.getLevel().name().toUpperCase())
                 .replace("%line%", line)
         ;

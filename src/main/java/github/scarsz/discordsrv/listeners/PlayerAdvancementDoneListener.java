@@ -104,7 +104,7 @@ public class PlayerAdvancementDoneListener implements Listener {
         BiFunction<String, Boolean, String> translator = (content, needsEscape) -> {
             if (content == null) return null;
             content = content
-                    .replaceAll("%time%|%date%", TimeUtil.timeStamp())
+                    .replaceAll("%time%|%date%", TimeUtil.timestamp())
                     .replace("%username%", player.getName())
                     .replace("%displayname%", DiscordUtil.strip(needsEscape ? DiscordUtil.escapeMarkdown(displayName) : displayName))
                     .replace("%world%", player.getWorld().getName())
