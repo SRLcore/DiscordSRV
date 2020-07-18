@@ -37,8 +37,10 @@ import org.bukkit.OfflinePlayer;
 
 import java.awt.*;
 import java.io.File;
+import java.time.Duration;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -533,17 +535,32 @@ public class DiscordUtil {
      * @param message The message to delete
      */
     public static void deleteMessage(Message message) {
-        if (message.isFromType(ChannelType.PRIVATE)) return;
+        deleteMessageAfter(message, Duration.ZERO);
+    }
 
-        try {
-            message.delete().queue();
-        } catch (PermissionException e) {
-            if (e.getPermission() != Permission.UNKNOWN) {
-                DiscordSRV.warning("Could not delete message in channel " + message.getTextChannel() + " because the bot does not have the \"" + e.getPermission().getName() + "\" permission");
-            } else {
-                DiscordSRV.warning("Could not delete message in channel " + message.getTextChannel() + " because \"" + e.getMessage() + "\"");
-            }
+    public static void deleteMessageAfter(Message message, Duration after) {
+        if (message.isFromType(ChannelType.PRIVATE)) {
+            return;
         }
+        message.delete().queueAfter(after.toMillis(), TimeUnit.MILLISECONDS,
+                success -> {
+                    //noop
+                }, failure -> {
+                    if (failure instanceof PermissionException &&
+                            ((PermissionException) failure).getPermission() != Permission.UNKNOWN) {
+                        DiscordSRV.warning(
+                                "Could not delete message in channel " +
+                                        message.getTextChannel() +
+                                        " because the bot does not have the \"" +
+                                        ((PermissionException) failure).getPermission().getName() +
+                                        "\" permission");
+                    } else {
+                        DiscordSRV.warning(
+                                "Could not delete message in channel " +
+                                        message.getTextChannel() +
+                                        " because \"" + failure.getMessage() + "\"");
+                    }
+                });
     }
 
     /**
