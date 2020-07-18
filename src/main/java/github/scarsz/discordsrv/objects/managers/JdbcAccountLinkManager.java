@@ -20,6 +20,8 @@ package github.scarsz.discordsrv.objects.managers;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.gson.JsonObject;
 import com.mysql.jdbc.Driver;
 import github.scarsz.discordsrv.DiscordSRV;
@@ -246,14 +248,13 @@ public class JdbcAccountLinkManager extends AccountLinkManager {
     }
 
     @Override
-    public Map<String, UUID> getLinkedAccounts() {
-        Map<String, UUID> accounts = new HashMap<>();
+    public BiMap<String, UUID> getLinkedAccounts() {
+        BiMap<String, UUID> accounts = HashBiMap.create();
 
-        try (final PreparedStatement statement = connection.prepareStatement("select * from " + accountsTable)) {
-            try (final ResultSet result = statement.executeQuery()) {
-                while (result.next()) {
-                    accounts.put(result.getString("discord"), UUID.fromString(result.getString("uuid")));
-                }
+        try (final PreparedStatement statement = connection.prepareStatement("select * from " + accountsTable);
+             final ResultSet result = statement.executeQuery()) {
+            while (result.next()) {
+                accounts.put(result.getString("discord"), UUID.fromString(result.getString("uuid")));
             }
         } catch (SQLException e) {
             e.printStackTrace();

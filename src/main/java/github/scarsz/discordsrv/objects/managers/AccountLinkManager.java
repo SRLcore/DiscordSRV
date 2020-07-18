@@ -18,6 +18,9 @@
 
 package github.scarsz.discordsrv.objects.managers;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.api.events.AccountLinkedEvent;
@@ -50,7 +53,7 @@ import java.util.stream.Collectors;
 public class AccountLinkManager {
 
     @Getter private final Map<String, UUID> linkingCodes = new ConcurrentHashMap<>();
-    @Getter private final Map<String, UUID> linkedAccounts = new ConcurrentHashMap<>();
+    @Getter private final BiMap<String, UUID> linkedAccounts = Maps.synchronizedBiMap(HashBiMap.create());
 
     public AccountLinkManager() {
         if (!DiscordSRV.getPlugin().getLinkedAccountsFile().exists() ||
@@ -239,22 +242,11 @@ public class AccountLinkManager {
     }
 
     public void unlink(UUID uuid) {
-        String discordId = linkedAccounts.entrySet().stream()
-                .filter(entry -> entry.getValue().equals(uuid))
-                .map(Map.Entry::getKey)
-                .findAny().orElse(null);
+        String discordId = linkedAccounts.inverse().get(uuid);
         if (discordId == null) return;
 
-        synchronized (linkedAccounts) {
-            beforeUnlink(uuid, discordId);
-
-            linkedAccounts.entrySet().stream()
-                    .filter(entry -> entry.getValue().equals(uuid))
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toSet()) // this needs to be collected in order to not modify array while iterating
-                    .forEach(linkedAccounts::remove);
-        }
-
+        beforeUnlink(uuid, discordId);
+        linkedAccounts.inverse().remove(uuid);
         afterUnlink(uuid, discordId);
 
         Player player = Bukkit.getPlayer(uuid);
@@ -267,10 +259,8 @@ public class AccountLinkManager {
         UUID uuid = linkedAccounts.get(discordId);
         if (uuid == null) return;
 
-        synchronized (linkedAccounts) {
-            beforeUnlink(uuid, discordId);
-            linkedAccounts.remove(discordId);
-        }
+        beforeUnlink(uuid, discordId);
+        linkedAccounts.remove(discordId);
         afterUnlink(uuid, discordId);
 
         Player player = Bukkit.getPlayer(uuid);
